@@ -144,7 +144,7 @@ export function getTextFromUserMessage(
   - Stories should highlight impact fitting both grant deliverables and parent flow
   - Do not add edits if there are none, and do not add infoNeededToComplete if the story is complete.
   - When making edits, make sure to include the timestamp, message, and your address, but do not change the substance of the story that much, only add major edits if the story is incomplete, otherwise just add more context.
-  - Do not use the "fear and" trope for titles, it's overused.
+  - Do not use the "fear and" trope for titles, or the word savage, it's overused.
   
   If you can't create any good, impactful stories related to the grant, it's acceptable to return an empty response.
   
@@ -158,7 +158,7 @@ export function getTextFromUserMessage(
   - Ensure the piece reflects Thompson's unique voice and perspective.
   - Overall pushes a positive sum mindset for builders.
 
-  Don't use the word gonzo or savage too much, but do embody the spirit of gonzo journalism.
+  Don't use the word gonzo too much, but do embody the spirit of gonzo journalism.
   Sources should always be URLs.
   
   Begin your response by analyzing the information in <story_planning> tags, then proceed to create stories based on your analysis.`;
