@@ -95,8 +95,6 @@ async function buildStory(
     [anthropicModel, openAIModel]
   );
 
-  console.log(JSON.stringify(object, null, 2));
-
   const stories = object.stories;
   const populatedStories = await populateGeneratedStories(
     object,

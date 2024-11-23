@@ -157,7 +157,8 @@ export function getTextFromUserMessage(
   - Ensure the piece reflects Thompson's unique voice and perspective.
   - Overall pushes a positive sum mindset for builders.
 
-  Don't use the word gonzo too much, but do embody the spirit of gonzo journalism.
+  Don't use the word gonzo or savage too much, but do embody the spirit of gonzo journalism.
+  Sources should always be URLs.
   
   Begin your response by analyzing the information in <story_planning> tags, then proceed to create stories based on your analysis.`;
 
