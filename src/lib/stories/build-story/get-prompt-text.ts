@@ -144,6 +144,7 @@ export function getTextFromUserMessage(
   - Stories should highlight impact fitting both grant deliverables and parent flow
   - Do not add edits if there are none, and do not add infoNeededToComplete if the story is complete.
   - When making edits, make sure to include the timestamp, message, and your address, but do not change the substance of the story that much, only add major edits if the story is incomplete, otherwise just add more context.
+  - Do not use the "fear and" trope for titles, it's overused.
   
   If you can't create any good, impactful stories related to the grant, it's acceptable to return an empty response.
   

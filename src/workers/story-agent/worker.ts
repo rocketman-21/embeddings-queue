@@ -52,7 +52,7 @@ export const storyAgentWorker = async (
 
           if (!lockAcquired) {
             log(
-              `Story ${story.newCastId} is already being processed or was recently processed, skipping`,
+              `Story ${story.grantId} is already being processed or was recently processed, skipping`,
               job
             );
             continue; // Skip to the next story
