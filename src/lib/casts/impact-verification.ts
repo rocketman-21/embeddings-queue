@@ -22,7 +22,7 @@ export async function updateCastImpactVerifications(
   job: Job
 ): Promise<void> {
   if (!castHash) throw new Error('Cast hash is required');
-  if (castHash.length !== 42) {
+  if (castHash.length !== 20) {
     throw new Error(
       `Cast hash is not valid length: ${castHash}, ${castHash.length}`
     );
