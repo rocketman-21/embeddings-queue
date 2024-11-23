@@ -1,4 +1,5 @@
 import { text, timestamp, integer, pgSchema, jsonb } from 'drizzle-orm/pg-core';
+import { bytea } from './bytea';
 
 // Define the schema
 const productionSchema = pgSchema('production');
@@ -30,7 +31,7 @@ export const farcasterCasts = productionSchema.table('farcaster_casts', {
   deletedAt: timestamp('deleted_at'),
   timestamp: timestamp('timestamp'),
   fid: integer('fid'),
-  hash: text('hash'),
+  hash: bytea('hash'),
   parentHash: text('parent_hash'),
   parentFid: integer('parent_fid'),
   parentUrl: text('parent_url'),

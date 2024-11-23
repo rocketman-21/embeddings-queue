@@ -150,3 +150,24 @@ export const builderProfileSchema = {
     },
   },
 };
+
+export const storySchema = {
+  body: {
+    type: 'object',
+    required: ['jobs'],
+    properties: {
+      jobs: {
+        type: 'array',
+        items: {
+          type: 'object',
+          required: ['newCastId', 'grantId'],
+          properties: {
+            newCastId: { type: 'number' },
+            grantId: { type: 'string' },
+          },
+        },
+        minItems: 1,
+      },
+    },
+  },
+};

@@ -1,11 +1,11 @@
-import { sql } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 import { farcasterCasts } from '../../database/farcaster-schema';
 import { farcasterDb } from '../../database/farcasterDb';
 import { CastAnalysis } from './cache';
 import { Job } from 'bullmq';
 import { log } from '../helpers';
 
-interface ImpactVerification {
+export interface ImpactVerification {
   model: string;
   score: number;
   reason: string;
@@ -15,7 +15,7 @@ interface ImpactVerification {
 }
 
 export async function updateCastImpactVerifications(
-  castHash: string,
+  castHash: Buffer,
   result: CastAnalysis,
   model: string,
   promptVersion: string,
@@ -41,7 +41,7 @@ export async function updateCastImpactVerifications(
   const cast = await farcasterDb
     .select({ impactVerifications: farcasterCasts.impactVerifications })
     .from(farcasterCasts)
-    .where(sql`hash = ${Buffer.from(castHash.replace('0x', ''), 'hex')}`)
+    .where(eq(farcasterCasts.hash, castHash))
     .limit(1);
 
   if (!cast || !cast[0]) {
@@ -71,7 +71,7 @@ export async function updateCastImpactVerifications(
     .set({
       impactVerifications: updatedVerifications,
     })
-    .where(sql`hash = ${Buffer.from(castHash.replace('0x', ''), 'hex')}`);
+    .where(eq(farcasterCasts.hash, castHash));
 
   log(
     `Updated impact verifications for cast ${castHash} on ${res.rowCount} rows`,

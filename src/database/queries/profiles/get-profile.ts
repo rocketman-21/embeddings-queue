@@ -1,7 +1,7 @@
 import { RedisClientType } from 'redis';
 import { farcasterProfiles } from '../../farcaster-schema';
 import { farcasterDb } from '../../farcasterDb';
-import { eq, arrayContains } from 'drizzle-orm';
+import { eq, arrayContains, inArray } from 'drizzle-orm';
 
 export const getFarcasterProfile = async (fid: number) => {
   const profile = await farcasterDb
@@ -38,4 +38,12 @@ export const getFarcasterProfileByAddress = async (
   }
 
   return result;
+};
+
+export const getFarcasterProfilesByFnames = async (fnames: string[]) => {
+  const profiles = await farcasterDb
+    .select()
+    .from(farcasterProfiles)
+    .where(inArray(farcasterProfiles.fname, fnames));
+  return profiles;
 };

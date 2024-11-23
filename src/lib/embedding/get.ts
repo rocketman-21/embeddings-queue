@@ -6,6 +6,7 @@ import {
   saveUrlSummariesForCastHash,
 } from '../url-summaries/attachments';
 import { validTypes } from '../../types/job';
+import { getCastHash } from '../casts/utils';
 
 // Get embeddings from OpenAI
 export const getEmbedding = async (
@@ -22,8 +23,12 @@ export const getEmbedding = async (
   let summaries: string[] = [];
 
   if (type === 'cast' && urls) {
+    if (!externalId) {
+      throw new Error('External ID is required for cast type');
+    }
+    const castHash = getCastHash(externalId);
     summaries = await saveUrlSummariesForCastHash(
-      externalId,
+      castHash,
       urls,
       redisClient,
       job

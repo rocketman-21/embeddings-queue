@@ -20,6 +20,7 @@ import {
   bulkAddJobSchema,
   isGrantUpdateSchema,
   builderProfileSchema,
+  storySchema,
 } from './lib/schemas';
 import { handleBulkAddEmbeddingJob } from './jobs/addBulkEmbeddingJob';
 import { handleBulkAddIsGrantUpdateJob } from './jobs/add-bulk-is-grant-update-job';
@@ -31,6 +32,7 @@ import {
   JobBody,
   StoryJobBody,
 } from './types/job';
+import { handleBulkAddStoryJob } from './jobs/add-bulk-story-job';
 
 const setupQueue = async () => {
   const embeddingsQueue = createQueue<JobBody>('EmbeddingsQueue');
@@ -127,6 +129,15 @@ const setupServer = (queues: {
       schema: builderProfileSchema,
     },
     handleBuilderProfileJob(queues.builderProfileQueue)
+  );
+
+  server.post(
+    '/bulk-add-story',
+    {
+      preHandler: validateApiKey,
+      schema: storySchema,
+    },
+    handleBulkAddStoryJob(queues.storyQueue)
   );
 
   server.setErrorHandler(handleError);

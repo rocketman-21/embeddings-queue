@@ -13,25 +13,25 @@ export interface CastAnalysis {
 
 export async function getCachedCastAnalysis(
   redisClient: RedisClientType,
-  castHash: string,
+  castHash: Buffer,
   grantId: string
 ): Promise<CastAnalysis | null> {
   return await getCachedResult<CastAnalysis>(
     redisClient,
-    `${castHash}:${grantId}`,
+    `${castHash.toString('hex')}:${grantId}`,
     CAST_ANALYSIS_CACHE_PREFIX
   );
 }
 
 export async function cacheCastAnalysis(
   redisClient: RedisClientType,
-  castHash: string,
+  castHash: Buffer,
   grantId: string,
   analysis: CastAnalysis
 ): Promise<void> {
   await cacheResult(
     redisClient,
-    `${castHash}:${grantId}`,
+    `${castHash.toString('hex')}:${grantId}`,
     CAST_ANALYSIS_CACHE_PREFIX,
     async () => analysis
   );

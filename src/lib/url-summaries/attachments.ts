@@ -108,7 +108,7 @@ export async function saveUrlSummariesForCastHash(
   const existingCast = await farcasterDb
     .select({ embedSummaries: farcasterCasts.embedSummaries })
     .from(farcasterCasts)
-    .where(sql`hash = ${Buffer.from(castHash.replace('0x', ''), 'hex')}`)
+    .where(eq(farcasterCasts.hash, castHash))
     .limit(1);
 
   if (!existingCast.length) {
@@ -119,8 +119,7 @@ export async function saveUrlSummariesForCastHash(
   // but if the urls include zora.co, then don't return existing summaries
   if (
     existingCast[0].embedSummaries &&
-    existingCast[0].embedSummaries.length > 0 &&
-    !urls.some((url) => url.includes('zora.co'))
+    existingCast[0].embedSummaries.length > 0
   ) {
     return existingCast[0].embedSummaries;
   }
@@ -130,12 +129,7 @@ export async function saveUrlSummariesForCastHash(
   const d = await farcasterDb
     .update(farcasterCasts)
     .set({ embedSummaries: summaries })
-    .where(
-      sql`farcaster_casts.hash = ${Buffer.from(
-        castHash.replace('0x', ''),
-        'hex'
-      )}`
-    );
+    .where(eq(farcasterCasts.hash, castHash));
 
   log(`Saved ${d.rowCount} embed summaries to db`, job);
 

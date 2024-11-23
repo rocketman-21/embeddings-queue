@@ -3,6 +3,7 @@ import { getAndSaveUrlSummaries } from '../url-summaries/attachments';
 import { RedisClientType } from 'redis';
 import { CastWithParent } from '../../database/queries/casts/casts-with-parent';
 import { CastForStory } from '../../database/queries/casts/casts-for-story';
+import { ImpactVerification } from './impact-verification';
 
 function getEmbedUrls(embeds: string | null): string[] {
   if (!embeds) return [];
@@ -11,11 +12,9 @@ function getEmbedUrls(embeds: string | null): string[] {
 
 function generateCastUrl(
   fname: string | undefined,
-  hash: string | null
+  hash: Buffer | null
 ): string {
-  return `https://warpcast.com/${fname}/0x${Buffer.from(hash || '').toString(
-    'hex'
-  )}`;
+  return `https://warpcast.com/${fname}/0x${hash?.toString('hex')}`;
 }
 
 function formatParentCastSection(
@@ -103,7 +102,7 @@ function formatRepliesSection(
   const replyTexts = replies
     .filter((reply) => reply.text && reply.hash)
     .map((reply) => {
-      const replyUrl = generateCastUrl(undefined, reply.hash!);
+      const replyUrl = generateCastUrl(undefined, getCastHash(reply.hash!));
       return `REPLY: ${reply.text}
 REPLY_URL: ${replyUrl}`;
     });
@@ -139,6 +138,15 @@ export async function generateCastTextForStory(
     ? `ATTACHMENT_URLS: ${embedUrls.join(' | ')}`
     : '';
 
+  const grantUpdateReason = JSON.stringify(
+    (cast.impactVerifications as ImpactVerification[]).filter(
+      (v) =>
+        v.is_grant_update &&
+        v.grant_id &&
+        cast.computedTags?.includes(v.grant_id)
+    )
+  );
+
   const repliesSection = cast.replies ? formatRepliesSection(cast.replies) : '';
 
   return `TIMESTAMP: ${new Date(cast.timestamp).toISOString()}
@@ -147,5 +155,10 @@ CAST_URL: ${castUrl}
 ${attachments}
 ${attachmentUrls}
 ${repliesSection}
+${grantUpdateReason ? `IMPACT_VERIFICATION: ${grantUpdateReason}` : ''}
 ---`;
+}
+
+export function getCastHash(castHash: string): Buffer {
+  return Buffer.from(castHash.replace('0x', ''), 'hex');
 }

@@ -38,9 +38,13 @@ export const stories = webSchema.table('Stories', {
   updatedAt: timestamp('updated_at').defaultNow(),
   mediaUrls: text('media_urls').array(),
   author: text('author'),
-  grantId: text('grant_id'),
-  parentFlowId: text('parent_flow_id'),
+  grantIds: text('grant_ids').array(),
+  parentFlowIds: text('parent_flow_ids').array(),
   tagline: text('tagline'),
+  castHashes: text('cast_hashes').array(),
+  mintUrls: text('mint_urls').array(),
+  infoNeededToComplete: text('info_needed_to_complete'),
+  edits: jsonb('edits'),
 });
 
 export const grant = pgTable('Grant', {

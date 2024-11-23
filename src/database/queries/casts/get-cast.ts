@@ -1,10 +1,9 @@
 import { farcasterCasts, farcasterProfiles } from '../../farcaster-schema';
 import { farcasterDb } from '../../farcasterDb';
-import { eq, sql } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 
-export const getCast = async (castHash: string) => {
+export const getCast = async (castHash: Buffer) => {
   // Convert the hexadecimal hash string to a Buffer
-  const castHashBuffer = Buffer.from(castHash.replace(/^0x/, ''), 'hex');
 
   const cast = await farcasterDb
     .select({
@@ -25,7 +24,7 @@ export const getCast = async (castHash: string) => {
     })
     .from(farcasterCasts)
     .leftJoin(farcasterProfiles, eq(farcasterCasts.fid, farcasterProfiles.fid))
-    .where(sql`hash = ${castHashBuffer}`);
+    .where(eq(farcasterCasts.hash, castHash));
 
   return cast[0];
 };

@@ -35,6 +35,7 @@ const castsForStories = async (computedTag: string) => {
       text: farcasterCasts.text,
       computedTags: farcasterCasts.computedTags,
       storyIds: farcasterCasts.storyIds,
+      impactVerifications: farcasterCasts.impactVerifications,
       profile: {
         fid: farcasterProfiles.fid,
         fname: farcasterProfiles.fname,

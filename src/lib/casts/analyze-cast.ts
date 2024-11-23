@@ -11,6 +11,7 @@ import { getCachedCastAnalysis } from './cache';
 import { saveUrlSummariesForCastHash } from '../url-summaries/attachments';
 import { getBuilderProfile } from '../../database/queries/profiles/get-builder-profile';
 import { updateCastImpactVerifications } from './impact-verification';
+import { getCastHash } from './utils';
 
 const PROMPT_VERSION = '1.0';
 
@@ -23,10 +24,12 @@ export async function analyzeCast(
     throw new Error('Cast content or urls are required');
   }
 
+  const castHash = getCastHash(data.castHash);
+
   // Check cache first
   const cachedAnalysis = await getCachedCastAnalysis(
     redisClient,
-    data.castHash,
+    castHash,
     data.grantId
   );
   if (cachedAnalysis) {
@@ -35,7 +38,7 @@ export async function analyzeCast(
   }
 
   const [summaries, builderProfile] = await Promise.all([
-    saveUrlSummariesForCastHash(data.castHash, data.urls, redisClient, job),
+    saveUrlSummariesForCastHash(castHash, data.urls, redisClient, job),
     getBuilderProfile(parseInt(data.builderFid)),
   ]);
 
@@ -119,10 +122,10 @@ export async function analyzeCast(
   };
 
   // Cache the analysis
-  await cacheCastAnalysis(redisClient, data.castHash, data.grantId, result);
+  await cacheCastAnalysis(redisClient, castHash, data.grantId, result);
 
   await updateCastImpactVerifications(
-    data.castHash,
+    castHash,
     result,
     anthropicModel.modelId,
     PROMPT_VERSION,

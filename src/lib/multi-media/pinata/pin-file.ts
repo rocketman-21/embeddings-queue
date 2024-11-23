@@ -35,6 +35,34 @@ interface PinJobResponse {
     };
   }>;
 }
+/**
+ * Helper function to check if content is already available on Pinata gateway
+ */
+async function checkGatewayAvailability(
+  hash: string,
+  job: Job
+): Promise<string | null> {
+  try {
+    const gatewayUrl = `https://${process.env.PINATA_GATEWAY_URL}/ipfs/${hash}`;
+    log(`Checking if content already available at ${gatewayUrl}`, job);
+
+    const response = await axios.head(gatewayUrl, {
+      headers: {
+        'x-pinata-gateway-token': process.env.PINATA_GATEWAY_KEY,
+      },
+      timeout: 5000,
+    });
+
+    if (response.status === 200) {
+      log('Content already available, skipping pin', job);
+      return gatewayUrl;
+    }
+    return null;
+  } catch (error) {
+    log('Content not found in gateway, proceeding with pin', job);
+    return null;
+  }
+}
 
 /**
  * Pins content to IPFS via Pinata using a CID/hash and monitors the pin status
@@ -45,6 +73,11 @@ export async function pinByHash(
   job: Job
 ): Promise<string | false> {
   try {
+    // Check if content is already available via gateway before pinning
+    const existingUrl = await checkGatewayAvailability(hash, job);
+    if (existingUrl) {
+      return existingUrl;
+    }
     // Start the pinning process
     await retryWithExponentialBackoff(
       async () => {
@@ -125,10 +158,10 @@ export async function pinByHash(
         // If we get here, pinning was successful
         log(`Successfully pinned content with hash ${hash}`, job);
         return `https://${process.env.PINATA_GATEWAY_URL}/ipfs/${hash}`;
+      } else {
+        log(`No pin job found for hash ${hash}`, job);
+        return `https://${process.env.PINATA_GATEWAY_URL}/ipfs/${hash}`;
       }
-
-      attempts++;
-      await new Promise((resolve) => setTimeout(resolve, delayMs));
     }
 
     log(`Timed out waiting for pin status for hash ${hash}`, job);

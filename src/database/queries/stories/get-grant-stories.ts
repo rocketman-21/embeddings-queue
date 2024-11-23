@@ -1,12 +1,12 @@
 import { flowsDb } from '../../flowsDb';
 import { stories } from '../../flows-schema';
-import { eq } from 'drizzle-orm';
+import { arrayContains } from 'drizzle-orm';
 
 export const getGrantStories = async (grantId: string) => {
   const storiesResult = await flowsDb
     .select()
     .from(stories)
-    .where(eq(stories.grantId, grantId))
+    .where(arrayContains(stories.grantIds, [grantId]))
     .execute();
 
   if (!storiesResult || storiesResult.length === 0) {
