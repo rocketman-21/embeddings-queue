@@ -4,7 +4,7 @@ import OpenAI from 'openai';
 import { deletionQueueWorker } from './workers/delete-embed';
 import { bulkEmbeddingsWorker } from './workers/bulk-embeddings';
 import { singleEmbeddingWorker } from './workers/single-embedding';
-import { isGrantUpdateWorker } from './workers/is-grant-update';
+import { isGrantUpdateWorker } from './workers/grant-update/is-grant-update';
 import { builderProfileWorker } from './workers/builder-profile/worker';
 import { JobBody, StoryJobBody } from './types/job';
 import { storyAgentWorker } from './workers/story-agent/worker';

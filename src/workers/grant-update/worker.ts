@@ -1,14 +1,14 @@
 import { Worker, Job, RedisOptions, ClusterOptions, Queue } from 'bullmq';
-import { IsGrantUpdateJobBody, StoryJobBody } from '../types/job';
-import { log } from '../lib/helpers';
-import { analyzeCast } from '../lib/casts/analyze-cast';
+import { IsGrantUpdateJobBody, StoryJobBody } from '../../types/job';
+import { log } from '../../lib/helpers';
+import { analyzeCast } from '../../lib/casts/analyze-cast';
 import { RedisClientType } from 'redis';
-import { farcasterCasts } from '../database/farcaster-schema';
-import { farcasterDb } from '../database/farcasterDb';
+import { farcasterCasts } from '../../database/farcaster-schema';
+import { farcasterDb } from '../../database/farcasterDb';
 import { eq, sql } from 'drizzle-orm';
-import { flowsDb } from '../database/flowsDb';
-import { derivedData } from '../database/flows-schema';
-import { getCastHash } from '../lib/casts/utils';
+import { flowsDb } from '../../database/flowsDb';
+import { derivedData } from '../../database/flows-schema';
+import { getCastHash } from '../../lib/casts/utils';
 
 export const isGrantUpdateWorker = async (
   queueName: string,
@@ -116,7 +116,7 @@ export const isGrantUpdateWorker = async (
     },
     {
       connection,
-      concurrency: 10, // Lower concurrency since this involves AI analysis
+      concurrency: 30, // Lower concurrency since this involves AI analysis
       lockDuration: 1200000, // 20 minutes
       lockRenewTime: 600000, // 10 minutes (half of lockDuration)
     }
