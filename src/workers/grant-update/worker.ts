@@ -116,7 +116,7 @@ export const isGrantUpdateWorker = async (
     },
     {
       connection,
-      concurrency: 30, // Lower concurrency since this involves AI analysis
+      concurrency: 25, // Lower concurrency since this involves AI analysis
       lockDuration: 1200000, // 20 minutes
       lockRenewTime: 600000, // 10 minutes (half of lockDuration)
     }
