@@ -63,7 +63,7 @@ export async function retryAiCallWithBackoff<T>(
 
     const status = error?.status || error?.code || 'Unknown';
     log(
-      `Error with model ${currentModel}: ${error.message}. Status: ${status}. Retries left: ${retries}`,
+      `Error with model ${currentModel.modelId}: ${error.message}. Status: ${status}. Retries left: ${retries}`,
       job
     );
 
@@ -71,9 +71,9 @@ export async function retryAiCallWithBackoff<T>(
       // Switch to the next model
       const nextModelIndex = modelIndex + 1;
       log(
-        `Switching to model ${models[
-          nextModelIndex
-        ].toString()} due to rate limit`,
+        `Switching to model ${
+          models[nextModelIndex].modelId
+        } due to rate limit`,
         job
       );
       return retryAiCallWithBackoff(
