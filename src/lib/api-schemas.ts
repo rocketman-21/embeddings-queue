@@ -104,20 +104,10 @@ export const isGrantUpdateSchema = {
         type: 'array',
         items: {
           type: 'object',
-          required: [
-            'grantDescription',
-            'parentFlowDescription',
-            'castHash',
-            'grantId',
-            'builderFid',
-            'urls',
-          ],
+          required: ['castHash', 'builderFid', 'urls'],
           properties: {
             castContent: { type: 'string', default: '' },
-            grantDescription: { type: 'string' },
-            parentFlowDescription: { type: 'string' },
             castHash: { type: 'string' },
-            grantId: { type: 'string' },
             builderFid: { type: 'string' },
             urls: {
               type: 'array',

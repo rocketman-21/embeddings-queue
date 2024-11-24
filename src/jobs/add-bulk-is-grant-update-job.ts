@@ -11,20 +11,10 @@ export const handleBulkAddIsGrantUpdateJob = (queue: Queue) => {
 
     // Validate each job in the array
     for (const job of jobs) {
-      const {
-        grantId,
-        castHash,
-        castContent,
-        grantDescription,
-        parentFlowDescription,
-        urls,
-      } = job;
+      const { castHash, castContent, urls } = job;
 
       const missingFields = [];
-      if (!grantId) missingFields.push('grantId');
       if (!castHash) missingFields.push('castHash');
-      if (!grantDescription) missingFields.push('grantDescription');
-      if (!parentFlowDescription) missingFields.push('parentFlowDescription');
 
       if (missingFields.length > 0) {
         reply.status(400).send({

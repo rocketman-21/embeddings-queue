@@ -29,11 +29,8 @@ export const validTypes = [
 
 export interface IsGrantUpdateJobBody {
   castContent: string;
-  grantDescription: string;
-  parentFlowDescription: string;
   castHash: string;
   builderFid: string;
-  grantId: string;
   urls: string[];
 }
 

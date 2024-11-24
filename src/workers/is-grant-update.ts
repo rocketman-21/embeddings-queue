@@ -32,14 +32,16 @@ export const isGrantUpdateWorker = async (
           const cast = casts[i];
           const result = await analyzeCast(redisClient, cast, job);
 
-          if (result.isGrantUpdate && result.grantId) {
+          const grantId = result.grantId;
+
+          if (result.isGrantUpdate && grantId) {
             // Convert the hexadecimal hash string to a Buffer
             const castHash = getCastHash(cast.castHash);
 
             const updated = await farcasterDb
               .update(farcasterCasts)
               .set({
-                computedTags: sql`array_append(array_remove(array_append(array_remove(computed_tags, ${result.grantId}), ${result.grantId}), 'nouns-flows'), 'nouns-flows')`,
+                computedTags: sql`array_append(array_remove(array_append(array_remove(computed_tags, ${grantId}), ${grantId}), 'nouns-flows'), 'nouns-flows')`,
               })
               .where(eq(farcasterCasts.hash, castHash))
               .returning();
@@ -48,7 +50,7 @@ export const isGrantUpdateWorker = async (
 
             storyJobs.push({
               newCastId: updated[0].id,
-              grantId: result.grantId,
+              grantId,
             });
 
             // get timestamp of updated cast
@@ -57,7 +59,7 @@ export const isGrantUpdateWorker = async (
             const currentLastBuilderUpdate = await flowsDb
               .select({ lastBuilderUpdate: derivedData.lastBuilderUpdate })
               .from(derivedData)
-              .where(eq(derivedData.grantId, cast.grantId));
+              .where(eq(derivedData.grantId, grantId));
 
             const lastBuilderUpdate =
               currentLastBuilderUpdate?.[0]?.lastBuilderUpdate || 0;
@@ -66,9 +68,9 @@ export const isGrantUpdateWorker = async (
               await flowsDb
                 .insert(derivedData)
                 .values({
-                  grantId: cast.grantId,
+                  grantId,
                   lastBuilderUpdate: timestamp,
-                  id: cast.grantId,
+                  id: grantId,
                   createdAt: new Date(),
                   updatedAt: new Date(),
                   minimumSalary: null,

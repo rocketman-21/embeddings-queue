@@ -74,7 +74,7 @@ export async function updateCastImpactVerifications(
     .where(eq(farcasterCasts.hash, castHash));
 
   log(
-    `Updated impact verifications for cast ${castHash} on ${res.rowCount} rows`,
+    `Updated impact verifications for cast ${castHash.toString('hex')} on ${res.rowCount} rows`,
     job
   );
 }

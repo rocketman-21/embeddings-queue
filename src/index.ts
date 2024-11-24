@@ -21,7 +21,7 @@ import {
   isGrantUpdateSchema,
   builderProfileSchema,
   storySchema,
-} from './lib/schemas';
+} from './lib/api-schemas';
 import { handleBulkAddEmbeddingJob } from './jobs/addBulkEmbeddingJob';
 import { handleBulkAddIsGrantUpdateJob } from './jobs/add-bulk-is-grant-update-job';
 import { handleBuilderProfileJob } from './jobs/add-builder-profile-job';

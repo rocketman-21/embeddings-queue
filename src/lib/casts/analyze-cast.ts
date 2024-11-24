@@ -12,8 +12,16 @@ import { saveUrlSummariesForCastHash } from '../url-summaries/attachments';
 import { getBuilderProfile } from '../../database/queries/profiles/get-builder-profile';
 import { updateCastImpactVerifications } from './impact-verification';
 import { getCastHash } from './utils';
+import {
+  getGrantsByAddresses,
+  GrantWithParent,
+} from '../../database/queries/grants/get-grant-by-addresses';
+import { getFarcasterProfile } from '../../database/queries/profiles/get-profile';
 
-const PROMPT_VERSION = '1.0';
+const PROMPT_VERSION = '1.1';
+
+// version history
+// 1.1 - Added multiple grant support to prevent duplicates for builders receiving multiple grants
 
 export async function analyzeCast(
   redisClient: RedisClientType,
@@ -24,14 +32,30 @@ export async function analyzeCast(
     throw new Error('Cast content or urls are required');
   }
 
+  const fid = data.builderFid.toString();
+
+  const profile = await getFarcasterProfile(parseInt(fid));
+
+  if (!profile?.verifiedAddresses?.length) {
+    throw new Error(
+      `Builder profile cannot be linked to any grants: ${JSON.stringify(profile)}`
+    );
+  }
+
+  const grants = await getGrantsByAddresses(profile.verifiedAddresses);
+
+  if (!grants?.length) {
+    throw new Error(
+      `Builder profile is linked to grants but no grants were found: ${JSON.stringify(
+        profile
+      )}`
+    );
+  }
+
   const castHash = getCastHash(data.castHash);
 
   // Check cache first
-  const cachedAnalysis = await getCachedCastAnalysis(
-    redisClient,
-    castHash,
-    data.grantId
-  );
+  const cachedAnalysis = await getCachedCastAnalysis(redisClient, castHash);
   if (cachedAnalysis) {
     log('Returning cached cast analysis', job);
     return cachedAnalysis;
@@ -57,9 +81,7 @@ export async function analyzeCast(
                 type: 'text',
                 text: getTextFromCastContent(
                   data.castContent,
-                  data.grantId,
-                  data.grantDescription,
-                  data.parentFlowDescription,
+                  grants,
                   summaries,
                   builderProfile
                 ),
@@ -94,6 +116,9 @@ export async function analyzeCast(
           confidenceScore: z
             .number()
             .describe("Confidence score whether it's a grant update or not"),
+          grantId: z
+            .string()
+            .describe('Grant ID that the cast most qualifies for'),
         }),
         messages: [
           {
@@ -118,11 +143,10 @@ export async function analyzeCast(
   const result = {
     ...object,
     castHash: data.castHash,
-    grantId: data.grantId,
   };
 
   // Cache the analysis
-  await cacheCastAnalysis(redisClient, castHash, data.grantId, result);
+  await cacheCastAnalysis(redisClient, castHash, result);
 
   await updateCastImpactVerifications(
     castHash,
@@ -135,11 +159,21 @@ export async function analyzeCast(
   return result;
 }
 
+function getGrantDescriptionSections(grants: GrantWithParent[]): string {
+  return grants
+    .map((grant) => {
+      return `<grant_description>
+Grant ID: ${grant.id}
+Description: ${grant.description}
+Parent Flow Description: ${grant.parentGrant?.description}
+</grant_description>`;
+    })
+    .join('\n\n');
+}
+
 function getTextFromCastContent(
   castContent: string,
-  grantId: string,
-  grantDescription: string,
-  parentFlowDescription: string,
+  grants: GrantWithParent[],
   summaries: string[],
   builderProfile: { content: string | null }
 ): string {
@@ -152,12 +186,8 @@ Here's the information you'll be working with:
 ${castContent || 'NO CAST CONTENT PROVIDED'}
 </cast_content>
 
-2. Grant Description:
-<grant_description>
-Grant ID: ${grantId}
-Description: ${grantDescription}
-Parent Flow Description: ${parentFlowDescription}
-</grant_description>
+2. Grant Descriptions:
+${getGrantDescriptionSections(grants)}
 
 3. Builder Profile:
 <builder_profile>
@@ -173,9 +203,11 @@ ${
 
 Please analyze the cast content to determine if it qualifies as a grant update. Follow these steps in your analysis:
 
-1. Review the cast content, grant description, and builder profile carefully.
+1. Review the cast content, grant descriptions, and builder profile carefully.
 2. List relevant quotes from each source.
-3. Determine if the cast is related to the grant work described in the grant description.
+3. Determine if the cast is related to the grant work described in the grant descriptions.
+3a. If the grant has a parent flow, also check if the cast satisfies the parent flow requirements.
+3b. If the cast fits as work for multiple grants that the builder is receiving, choose the most relevant grant ONLY.
 4. Verify that the work or activity described in the cast is being done by the grant recipient themselves.
 5. Check if the work falls within the scope of the grant and parent flow requirements.
 6. Consider any images or attachments mentioned in the cast as part of your analysis.
@@ -194,6 +226,7 @@ Important considerations:
 
 - If the cast content is not provided, there must be attachments to determine if it's a grant update
 - The cast must describe concrete actions, progress, or tangible contributions related to the grant's goals
+- If the cast is related to multiple grants, choose the most relevant grant ONLY
 - Do not count as updates:
   - Generic comments about grants program
   - Work not done by the grant recipient themselves

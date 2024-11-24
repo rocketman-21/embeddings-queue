@@ -4,7 +4,7 @@ import { cacheResult, getCachedResult } from '../cache/cacheResult';
 const CAST_ANALYSIS_CACHE_PREFIX = 'ai-cast-analysis-v3:';
 
 export interface CastAnalysis {
-  grantId?: string;
+  grantId: string;
   isGrantUpdate: boolean;
   reason: string;
   confidenceScore: number;
@@ -13,12 +13,11 @@ export interface CastAnalysis {
 
 export async function getCachedCastAnalysis(
   redisClient: RedisClientType,
-  castHash: Buffer,
-  grantId: string
+  castHash: Buffer
 ): Promise<CastAnalysis | null> {
   return await getCachedResult<CastAnalysis>(
     redisClient,
-    `${castHash.toString('hex')}:${grantId}`,
+    `${castHash.toString('hex')}`,
     CAST_ANALYSIS_CACHE_PREFIX
   );
 }
@@ -26,12 +25,11 @@ export async function getCachedCastAnalysis(
 export async function cacheCastAnalysis(
   redisClient: RedisClientType,
   castHash: Buffer,
-  grantId: string,
   analysis: CastAnalysis
 ): Promise<void> {
   await cacheResult(
     redisClient,
-    `${castHash.toString('hex')}:${grantId}`,
+    `${castHash.toString('hex')}`,
     CAST_ANALYSIS_CACHE_PREFIX,
     async () => analysis
   );
