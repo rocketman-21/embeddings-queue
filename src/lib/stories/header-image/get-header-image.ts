@@ -16,13 +16,14 @@ import {
   processZoraUrl,
 } from '../utils/media-utils';
 import { selectBestImage } from './utils';
+import { LimitedStory } from '../build-story/populate-story-data';
 
 const isUrlInArray = (url: string, imageUrls: MediaInfo[]) => {
   return imageUrls.some((img) => img.url === url);
 };
 
 export async function getHeaderImage(
-  story: Omit<StoryAnalysis, 'headerImage' | 'id' | 'mediaUrls'>,
+  story: LimitedStory,
   mediaUrls: string[],
   job: Job,
   redisClient: RedisClientType

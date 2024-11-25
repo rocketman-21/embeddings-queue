@@ -72,7 +72,7 @@ export function getTextFromUserMessage(
   o. If there are a lot of fun exciting details or quotes, feel free to make the paragraphs much more detailed.
   p. If an existing story already exists for a given topic, impact, or event, don't create a new story.
   q. However, if the existing story is incomplete, you should add more context to it if you can, and make sure to return the id field of the existing story as part of your updated story.
-  r. Do not forget to return completeness and createdAt fields.
+  r. Do not forget to return the completeness fields.
   s. Be sure to mention builder names and be specific about the action and impact happening.
   
   2. Create the story:
@@ -94,7 +94,6 @@ export function getTextFromUserMessage(
   (2-7 paragraphs total)
     ",
     "participants": ["Farcaster username 1", "Farcaster username 2"],
-    "createdAt": "YYYY-MM-DDTHH:mm:ss.sssZ",
     "completenessScore": 0.0 to 1.0,
     "infoNeededToComplete": "Description of missing information (if incomplete)"
     "keyPoints": ["Key point 1", "Key point 2"],
@@ -138,7 +137,6 @@ export function getTextFromUserMessage(
   - Use specific, descriptive section headers
   - Link to external sources where possible
   - Use personal names rather than impersonal titles
-  - Created at should be when impact occurred, or when the first cast happened
   - Don't be cringy about nounish values
   - Do not use terms like web or web3 or nft or crypto or web culture or blockchain.
   - Stories should highlight impact fitting both grant deliverables and parent flow

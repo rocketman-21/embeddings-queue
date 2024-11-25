@@ -100,15 +100,9 @@ async function buildStory(
     object,
     stories,
     job,
-    redisClient
+    redisClient,
+    casts
   );
-
-  // for (const story of populatedStories) {
-  //   const relatedCasts = await getRelatedCasts(story, redisClient, job);
-  //   console.log({ relatedCasts });
-  //   throw new Error('stop');
-  //   // story.relatedCasts = relatedCasts;
-  // }
 
   return populatedStories;
 }

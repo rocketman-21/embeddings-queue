@@ -1,13 +1,13 @@
-import { StoryAnalysis } from '../build-story/story-analysis';
 import { anthropicModel, openAIModel, retryAiCallWithBackoff } from '../../ai';
 import { generateObject } from 'ai';
 import { z } from 'zod';
 import { Job } from 'bullmq';
 import { MediaInfo } from '../utils/media-utils';
+import { LimitedStory } from '../build-story/populate-story-data';
 
 export const selectBestImage = async (
   imageUrls: MediaInfo[],
-  story: Omit<StoryAnalysis, 'headerImage' | 'id' | 'mediaUrls'>,
+  story: LimitedStory,
   job: Job
 ): Promise<string | null> => {
   const { object } = await retryAiCallWithBackoff(

@@ -7,13 +7,14 @@ import { RedisClientType } from 'redis';
 import { log } from '../../helpers';
 import { getCastHash } from '../../casts/utils';
 import { processEmbed, processZoraUrl } from '../utils/media-utils';
+import { LimitedStory } from '../build-story/populate-story-data';
 
 const isUrlInArray = (url: string, imageUrls: string[]) => {
   return imageUrls.some((img) => img === url);
 };
 
 export async function getMediaUrls(
-  story: Omit<StoryAnalysis, 'mediaUrls' | 'headerImage' | 'id'>,
+  story: LimitedStory,
   job: Job,
   redisClient: RedisClientType
 ): Promise<string[]> {
