@@ -30,4 +30,5 @@ Mention noggles if you see them in any of these contexts.
 Be thorough and detailed in your analysis of the image, what's going on, who is in the image, what they are doing, etc.
 Always describe in vivid detail the people in the image and what they look like, from their facial features, hair color, height, weight, clothing, and anything else that might be relevant.
 Ensure if the image is a screenshot of a website, or message, that you describe the content of the website or message.
-Ensure if the image is a cross-post or repost of another image or person's content, that you make sure to mention that it is a repost or cross-post.`;
+Ensure if the image is a cross-post or repost of another image or person's content, that you make sure to mention that it is a repost or cross-post.
+If an image appears that it is a screenshot of a website, app, or social platform, ensure you describe the content of the website, app, or social platform and feel free to make any other observations about what platform the image is from.`;
