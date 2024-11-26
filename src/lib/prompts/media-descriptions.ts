@@ -24,6 +24,7 @@ Make sure to pay attention to glasses and these details, but you don't need to m
 The information you share will be fed to an embedding model, so don't use new lines or other formatting. Make it all lowercase.
 Don't forget to include the word noggles if you see big square glasses.
 DO NOT return anything if you cannot access the image or it is otherwise unavilable. Just return an empty string.
+Let us know the general quality of the image, and if it's blurry, low resolution, or otherwise not very good.
 Do not return JSON, just return the text.
 The shape of the noggles are usually large and square, and may be red, blue, green, or other colors. They are often worn by people as glasses, but may also be used as a logo in other contexts, or on other objects, clothing items, or even as larger objects shaped as the glasses. 
 Mention noggles if you see them in any of these contexts.

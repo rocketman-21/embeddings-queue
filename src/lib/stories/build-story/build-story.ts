@@ -12,25 +12,6 @@ import {
   getStoryObjectSchema,
   getStoryObjectSystemPrompt,
 } from './story-object';
-import { getRelatedCasts } from './get-related-casts';
-
-export async function buildStories(
-  redisClient: RedisClientType,
-  casts: CastForStory[],
-  job: Job,
-  grant: { description: string },
-  parentGrant: { description: string },
-  existingStories: GrantStories
-): Promise<StoryAnalysis[]> {
-  return buildStory(
-    redisClient,
-    casts,
-    job,
-    grant,
-    parentGrant,
-    existingStories
-  );
-}
 
 async function buildStory(
   redisClient: RedisClientType,
@@ -105,4 +86,22 @@ async function buildStory(
   );
 
   return populatedStories;
+}
+
+export async function buildStories(
+  redisClient: RedisClientType,
+  casts: CastForStory[],
+  job: Job,
+  grant: { description: string },
+  parentGrant: { description: string },
+  existingStories: GrantStories
+): Promise<StoryAnalysis[]> {
+  return buildStory(
+    redisClient,
+    casts,
+    job,
+    grant,
+    parentGrant,
+    existingStories
+  );
 }
