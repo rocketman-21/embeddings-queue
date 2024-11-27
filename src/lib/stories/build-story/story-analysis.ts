@@ -30,7 +30,6 @@ export async function generateStory(
   const storyChain = RunnableSequence.from([
     generationChain,
     (input) => {
-      console.log(`input: ${input}`);
       return {
         storyGenerationText: input,
         format_instructions: storyObjectParser.getFormatInstructions(),
@@ -46,8 +45,6 @@ export async function generateStory(
     parentGrantDescription: parentGrant.description,
     authorAddress: DR_GONZO_ADDRESS,
   });
-
-  log(`result: ${JSON.stringify(result)}`, job);
 
   return result;
 }
