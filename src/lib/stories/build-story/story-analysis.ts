@@ -23,16 +23,6 @@ export async function generateStory(
     .pipe(anthropicModelWithFallback)
     .pipe(new StringOutputParser());
 
-  const test = await generationChain.invoke({
-    existingStories: JSON.stringify(existingStories),
-    combinedContent: JSON.stringify(combinedContent),
-    grantDescription: grant.description,
-    parentGrantDescription: parentGrant.description,
-    authorAddress: DR_GONZO_ADDRESS,
-  });
-
-  log(`test: ${test}`, job);
-
   const objectChain = storyObjectPrompt
     .pipe(anthropicModelWithFallback)
     .pipe(storyObjectParser);
