@@ -1,17 +1,12 @@
-import { generateObject } from 'ai';
 import { RedisClientType } from 'redis';
 import { Job } from 'bullmq';
 import { CastForStory } from '../../../database/queries/casts/casts-for-story';
-import { openAIModel, anthropicModel, retryAiCallWithBackoff } from '../../ai';
-import { generateCastTextForStory } from '../../casts/utils';
 import { GrantStories } from '../../../database/queries/stories/get-grant-stories';
 import { log } from '../../helpers';
-import { generateStoryText, StoryAnalysis } from './story-analysis';
+import { generateStory } from './story-analysis';
 import { populateGeneratedStories } from './populate-story-data';
-import {
-  getStoryObjectSchema,
-  getStoryObjectSystemPrompt,
-} from './story-object';
+import { StoryAnalysis } from './types';
+import { prepareCastData } from './casts-data';
 
 async function buildStory(
   redisClient: RedisClientType,
@@ -23,31 +18,20 @@ async function buildStory(
   parentGrant: {
     description: string;
   },
-  existingStories: GrantStories
+  existingStories: GrantStories,
+  builderAddresses: string[]
 ): Promise<StoryAnalysis[]> {
   if (!casts || casts.length === 0) {
     throw new Error('Stories data is required');
   }
 
-  // Get cast text with summaries for all casts
-  const castTextsPromises = casts.map((cast) =>
-    generateCastTextForStory(cast, redisClient, job)
-  );
-  const castTexts = await Promise.all(castTextsPromises);
+  log('Preparing cast data', job);
 
-  // Combine all cast content and summaries
-  const combinedContent = castTexts
-    .map((text, index) => ({
-      content: text,
-      timestamp: casts[index].timestamp,
-    }))
-    .sort(
-      (a, b) => (a.timestamp?.getTime() || 0) - (b.timestamp?.getTime() || 0)
-    );
+  const combinedContent = await prepareCastData(casts, redisClient, job);
 
   log('Generating stories', job);
 
-  const text = await generateStoryText(
+  const result = await generateStory(
     combinedContent,
     existingStories,
     grant,
@@ -55,34 +39,12 @@ async function buildStory(
     job
   );
 
-  const { object } = await retryAiCallWithBackoff(
-    (model) => () =>
-      generateObject({
-        model,
-        schema: getStoryObjectSchema(),
-        messages: [
-          {
-            role: 'system',
-            content: getStoryObjectSystemPrompt(),
-          },
-          {
-            role: 'user',
-            content: text.text,
-          },
-        ],
-        maxTokens: 4000,
-      }),
-    job,
-    [anthropicModel, openAIModel]
-  );
-
-  const stories = object.stories;
   const populatedStories = await populateGeneratedStories(
-    object,
-    stories,
+    result.stories,
     job,
     redisClient,
-    casts
+    casts,
+    builderAddresses
   );
 
   return populatedStories;
@@ -94,7 +56,8 @@ export async function buildStories(
   job: Job,
   grant: { description: string },
   parentGrant: { description: string },
-  existingStories: GrantStories
+  existingStories: GrantStories,
+  builderAddresses: string[]
 ): Promise<StoryAnalysis[]> {
   return buildStory(
     redisClient,
@@ -102,6 +65,7 @@ export async function buildStories(
     job,
     grant,
     parentGrant,
-    existingStories
+    existingStories,
+    builderAddresses
   );
 }

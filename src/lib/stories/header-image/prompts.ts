@@ -1,9 +1,10 @@
 import {
+  AIMessagePromptTemplate,
   HumanMessagePromptTemplate,
   SystemMessagePromptTemplate,
 } from '@langchain/core/prompts';
 
-export const storySelectionSystemMessage =
+export const storySelectionSystemMessage: SystemMessagePromptTemplate =
   SystemMessagePromptTemplate.fromTemplate(
     `You are an AI assistant that analyzes images to select the best header image for a story.
 
@@ -18,10 +19,11 @@ Please analyze these images and select the best one for the story header based o
 Select the image that best represents the story's main theme or impact. If there is no image that meets the criteria, return null.`
   );
 
-export const storyDataPrompt = HumanMessagePromptTemplate.fromTemplate(
-  `Story Title: {{title}}
-Story Summary: {{summary}}
-Available Images: {{images}}
+export const storyDataPrompt: HumanMessagePromptTemplate =
+  HumanMessagePromptTemplate.fromTemplate(
+    `Story Title: {title}
+Story Summary: {summary}
+Available Images: {images}
 
-{{format_instructions}}`
-);
+{format_instructions}`
+  );

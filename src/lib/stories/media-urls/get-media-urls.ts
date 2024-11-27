@@ -1,6 +1,5 @@
 import { farcasterCasts } from '../../../database/farcaster-schema';
 import { inArray } from 'drizzle-orm';
-import { StoryAnalysis } from '../build-story/story-analysis';
 import { Job } from 'bullmq';
 import { farcasterDb } from '../../../database/farcasterDb';
 import { RedisClientType } from 'redis';

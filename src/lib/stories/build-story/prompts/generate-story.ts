@@ -1,16 +1,18 @@
-import { GrantStories } from '../../../database/queries/stories/get-grant-stories';
-import { DR_GONZO_ADDRESS } from '../config';
+import {
+  ChatPromptTemplate,
+  HumanMessagePromptTemplate,
+  SystemMessagePromptTemplate,
+  AIMessagePromptTemplate,
+} from '@langchain/core/prompts';
 
-export function getTextFromUserMessage(
-  combinedContent: {
-    content: string;
-    timestamp: Date | null;
-  }[],
-  existingStories: GrantStories,
-  grant: { description: string | null },
-  parentGrant: { description: string | null }
-): string {
-  const content = `You are an expert journalist tasked with analyzing grant-related posts and constructing newsworthy stories about the impact of grant recipients. Your goal is to create compelling narratives that showcase the real-world effects of the funded projects.
+export const constructStorySystemMessage: SystemMessagePromptTemplate =
+  SystemMessagePromptTemplate.fromTemplate(
+    'You are Hunter S. Thompson, writing a story about the grant.'
+  );
+
+export const constructStoryUserMessage: HumanMessagePromptTemplate =
+  HumanMessagePromptTemplate.fromTemplate(
+    `You are an expert journalist tasked with analyzing grant-related posts and constructing newsworthy stories about the impact of grant recipients. Your goal is to create compelling narratives that showcase the real-world effects of the funded projects.
   
   You are analyzing a series of related posts to identify and construct multiple distinct newsworthy stories. Group related posts together into coherent narratives, identifying major stories or themes. For each story, consider the chronological order, relationships between posts, and extract key information. Focus on building narratives that capture the full context and progression of events. Prioritize the most significant and newsworthy stories from the content. If you don't have enough details to build a full story, you can still return a partial story. Only build stories that are related to the grant or impact based on the work expected from the grant.
   
@@ -18,37 +20,22 @@ export function getTextFromUserMessage(
   
   Existing Stories:
   <stories>
-  ${JSON.stringify(
-    existingStories.map((story) => ({
-      id: story.id,
-      title: story.title,
-      summary: story.summary,
-      keyPoints: story.keyPoints,
-      participants: story.participants,
-      timeline: story.timeline,
-      completeness: story.completeness,
-      complete: story.complete,
-      sources: story.sources,
-      tagline: story.tagline,
-    })),
-    null,
-    2
-  )}
+  {existingStories}
   </stories>
   
   New Casts:
   <casts>
-  ${JSON.stringify(combinedContent, null, 2)}
+  {combinedContent}
   </casts>
   
   Grant Description:
   <grant>
-  ${grant.description || 'No description provided.'}
+  {grantDescription}
   </grant>
   
   Parent Flow Description:
   <flow>
-  ${parentGrant.description || 'No description provided.'}
+  {parentGrantDescription}
   </flow>
   
   Now, follow these steps to create impactful stories:
@@ -79,7 +66,6 @@ export function getTextFromUserMessage(
   Based on your analysis, construct a story using the following structure:
   
   <story>
-  {
     "title": "Concise, unique title (max 6 words)",
     "tagline": "Catchy phrase capturing the essence (max 11 words)",
     "summary": "
@@ -93,15 +79,12 @@ export function getTextFromUserMessage(
   
   (2-7 paragraphs total)
     ",
-    "participants": ["Farcaster username 1", "Farcaster username 2"],
     "completenessScore": 0.0 to 1.0,
     "infoNeededToComplete": "Description of missing information (if incomplete)"
     "keyPoints": ["Key point 1", "Key point 2"],
     "timeline": [
-      {
         "timestamp": "YYYY-MM-DDTHH:mm:ss.sssZ",
         "event": "Description of event"
-      }
     ],
     "castHashes": ["Cast hash 1", "Cast hash 2"],
     "sentiment": "positive" | "negative" | "neutral",
@@ -109,13 +92,10 @@ export function getTextFromUserMessage(
     "sources": ["Source URL 1", "Source URL 2"],
     "mintUrls": ["Mint URL 1", "Mint URL 2"],
     "edits": [
-      {
         "timestamp": "YYYY-MM-DDTHH:mm:ss.sssZ", 
         "message": "Edit description",
-        "address": "ETH address of the editor (yours is ${DR_GONZO_ADDRESS})"
-      }
+        "address": "ETH address of the editor (yours is {authorAddress})"
     ]
-  }
   </story>
   
   Important guidelines:
@@ -132,7 +112,6 @@ export function getTextFromUserMessage(
   - Include images inside the story if relevant, as markdown images from cast attachments, but only from casts that are included in the casts hashes array or sources array.
   - DO NOT embed images in markdown from casts that are not a part of the story, or .m3u8 or zora.co links
   - Only use images from casts that are part of the story
-  - Only pass Farcaster FIDs to participants array
   - Make titles unique to grant and include recipient name if needed
   - Use specific, descriptive section headers
   - Link to external sources where possible
@@ -159,8 +138,14 @@ export function getTextFromUserMessage(
   Don't use the word gonzo too much, but do embody the spirit of gonzo journalism.
   Sources should always be URLs.
   
-  Begin your response by analyzing the information in <story_planning> tags, then proceed to create stories based on your analysis.`;
+  Begin your response by analyzing the information in <story_planning> tags, then proceed to create stories based on your analysis.`
+  );
 
-  console.log('Content for AI:', content);
-  return content;
-}
+const assistantStart: AIMessagePromptTemplate =
+  AIMessagePromptTemplate.fromTemplate(`<story_planning>`);
+
+export const storyGenerationPrompt = ChatPromptTemplate.fromMessages([
+  constructStorySystemMessage,
+  constructStoryUserMessage,
+  assistantStart,
+]);

@@ -1,39 +1,15 @@
-import { generateText } from 'ai';
-import { openAIModel, retryAiCallWithBackoff, anthropicModel } from '../../ai';
 import { Job } from 'bullmq';
-import { getTextFromUserMessage } from './get-prompt-text';
+import { storyGenerationPrompt } from './prompts/generate-story';
 import { GrantStories } from '../../../database/queries/stories/get-grant-stories';
+import { anthropicModelWithFallback } from '../../models';
+import { DR_GONZO_ADDRESS } from '../config';
+import { StringOutputParser } from '@langchain/core/output_parsers';
+import { RunnableSequence } from '@langchain/core/runnables';
+import { storyObjectParser } from './schemas';
+import { storyObjectPrompt } from './prompts/story-object';
+import { log } from '../../helpers';
 
-export interface StoryAnalysis {
-  id: string;
-  title: string;
-  summary: string;
-  keyPoints: string[];
-  participants: string[];
-  timeline: {
-    timestamp: string;
-    event: string;
-  }[];
-  sentiment: 'positive' | 'negative' | 'neutral';
-  completeness: number;
-  complete: boolean;
-  sources: string[];
-  mediaUrls: string[];
-  author?: string;
-  headerImage: string;
-  tagline: string;
-  castHashes: string[];
-  edits?: {
-    timestamp: string;
-    message: string;
-    address: string;
-  }[];
-  infoNeededToComplete?: string;
-  mintUrls?: string[];
-  createdAt: string;
-}
-
-export async function generateStoryText(
+export async function generateStory(
   combinedContent: {
     content: string;
     timestamp: Date | null;
@@ -43,44 +19,45 @@ export async function generateStoryText(
   parentGrant: { description: string },
   job: Job
 ) {
-  return await retryAiCallWithBackoff(
-    (model) => () =>
-      generateText({
-        model,
-        temperature: 0,
-        messages: [
-          {
-            role: 'system',
-            content:
-              'You are Hunter S. Thompson, writing a story about the grant.',
-          },
-          {
-            role: 'user',
-            content: [
-              {
-                type: 'text',
-                text: getTextFromUserMessage(
-                  combinedContent,
-                  existingStories,
-                  grant,
-                  parentGrant
-                ),
-              },
-            ],
-          },
-          {
-            role: 'assistant',
-            content: [
-              {
-                type: 'text',
-                text: '<story_planning>',
-              },
-            ],
-          },
-        ],
-        maxTokens: 4000,
-      }),
-    job,
-    [anthropicModel, openAIModel]
-  );
+  const generationChain = storyGenerationPrompt
+    .pipe(anthropicModelWithFallback)
+    .pipe(new StringOutputParser());
+
+  const test = await generationChain.invoke({
+    existingStories: JSON.stringify(existingStories),
+    combinedContent: JSON.stringify(combinedContent),
+    grantDescription: grant.description,
+    parentGrantDescription: parentGrant.description,
+    authorAddress: DR_GONZO_ADDRESS,
+  });
+
+  log(`test: ${test}`, job);
+
+  const objectChain = storyObjectPrompt
+    .pipe(anthropicModelWithFallback)
+    .pipe(storyObjectParser);
+
+  const storyChain = RunnableSequence.from([
+    generationChain,
+    (input) => {
+      console.log(`input: ${input}`);
+      return {
+        storyGenerationText: input,
+        format_instructions: storyObjectParser.getFormatInstructions(),
+      };
+    },
+    objectChain,
+  ]);
+
+  const result = await storyChain.invoke({
+    existingStories: JSON.stringify(existingStories),
+    combinedContent: JSON.stringify(combinedContent),
+    grantDescription: grant.description,
+    parentGrantDescription: parentGrant.description,
+    authorAddress: DR_GONZO_ADDRESS,
+  });
+
+  log(`result: ${JSON.stringify(result)}`, job);
+
+  return result;
 }

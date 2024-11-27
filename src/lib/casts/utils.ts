@@ -139,7 +139,7 @@ export async function generateCastTextForStory(
     : '';
 
   const grantUpdateReason = JSON.stringify(
-    (cast.impactVerifications as ImpactVerification[]).filter(
+    ((cast.impactVerifications as ImpactVerification[]) || []).filter(
       (v) =>
         v.is_grant_update &&
         v.grant_id &&

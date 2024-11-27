@@ -109,7 +109,8 @@ export const storyAgentWorker = async (
               {
                 description: parentGrant.description,
               },
-              existingStories
+              existingStories,
+              [grant.recipient]
             );
 
             console.log('analysis', analysis);
