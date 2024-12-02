@@ -8,6 +8,7 @@ import { FarcasterCast, farcasterCasts } from '../../database/farcaster-schema';
 import { log } from '../helpers';
 import { eq, sql } from 'drizzle-orm';
 import { describeZora } from '../multi-media/zora/describe-zora';
+import { describeYoutubeVideo } from '../multi-media/youtube/describe';
 
 // Get URL summaries from a list of URLs
 export const fetchUrlSummaries = async (
@@ -33,6 +34,11 @@ export const fetchUrlSummaries = async (
       if (url.includes('zora.co')) {
         const summary = await describeZora(url, redisClient, job);
         log(`Zora summary: ${summary}`, job);
+        if (summary) {
+          summaries.push(summary);
+        }
+      } else if (url.includes('youtube.com') || url.includes('youtu.be')) {
+        const summary = await describeYoutubeVideo(url, redisClient, job);
         if (summary) {
           summaries.push(summary);
         }
