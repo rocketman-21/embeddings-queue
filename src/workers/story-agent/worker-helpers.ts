@@ -86,7 +86,7 @@ export function prepareStoryForInsertion(
     edits: storyAnalysis.edits,
     castHashes: Array.from(new Set(storyAnalysis.castHashes)),
     infoNeededToComplete: storyAnalysis.infoNeededToComplete,
-    mintUrls: storyAnalysis.mintUrls,
+    mintUrls: Array.from(new Set(storyAnalysis.mintUrls)),
   };
 }
 
