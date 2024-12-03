@@ -33,7 +33,7 @@ export const selectBestImage = async (
     format_instructions: parser.getFormatInstructions(),
   });
 
-  return result.bestImageUrl;
+  return result.bestImageUrl || null;
 };
 
 const storySelectionPrompt = ChatPromptTemplate.fromMessages([

@@ -90,7 +90,7 @@ export function getGenerateStoryMessage(
     ],
     "castHashes": ["Cast hash 1", "Cast hash 2"],
     "sentiment": "positive" | "negative" | "neutral",
-    "complete": true | false - depending on if you have enough information to write a full story (completenessScore >= 0.8),
+    "complete": true | false - depending on if you have enough information to write a full story (completenessScore >= 0.85),
     "sources": ["Source URL 1", "Source URL 2"],
     "mintUrls": ["Mint URL 1", "Mint URL 2"],
     "edits": [

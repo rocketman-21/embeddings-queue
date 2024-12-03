@@ -1,5 +1,4 @@
 import {
-  AIMessagePromptTemplate,
   HumanMessagePromptTemplate,
   SystemMessagePromptTemplate,
 } from '@langchain/core/prompts';
@@ -16,7 +15,16 @@ Please analyze these images and select the best one for the story header based o
 5. Ability to capture reader attention
 6. Minimize the amount of text in the image
 
-Select the image that best represents the story's main theme or impact. If there is no image that meets the criteria, return null.`
+Select the image that best represents the story's main theme or impact. Return empty string if:
+- The images are screenshots of websites, receipts, or other utilitarian content
+- The images contain mostly text
+- The images are low quality or poorly composed
+- The images don't visually represent the story's key themes
+- No images meet the quality and relevance criteria above
+
+Return a JSON object with:
+- bestImageUrl: string - URL of the best image, or empty string if none are suitable
+- reason: string - Brief explanation of why the image was selected or why all were rejected`
   );
 
 export const storyDataPrompt: HumanMessagePromptTemplate =
@@ -25,5 +33,7 @@ export const storyDataPrompt: HumanMessagePromptTemplate =
 Story Summary: {summary}
 Available Images: {images}
 
-{format_instructions}`
+{format_instructions}
+
+Return a valid JSON object without any markdown formatting or code blocks.`
   );
