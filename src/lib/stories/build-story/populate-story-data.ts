@@ -8,10 +8,8 @@ import { CastForStory } from '../../../database/queries/casts/casts-for-story';
 
 export type LimitedStory = Omit<
   StoryAnalysis,
-  'id' | 'mediaUrls' | 'headerImage' | 'createdAt' | 'participants'
-> & {
-  storyId?: string;
-};
+  'mediaUrls' | 'headerImage' | 'createdAt' | 'participants' | 'id'
+> & { id?: string };
 
 export async function populateGeneratedStories(
   stories: LimitedStory[],
@@ -37,7 +35,7 @@ export async function populateGeneratedStories(
       author: DR_GONZO_ADDRESS,
       headerImage: headerImages[index] || '',
       participants: builderAddresses,
-      id: story.storyId || '',
+      id: story.id || '',
       mediaUrls: mediaUrls[index] || [],
       complete: headerImages[index] ? story.complete : false,
       infoNeededToComplete: headerImages[index]

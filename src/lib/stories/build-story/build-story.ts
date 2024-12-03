@@ -39,6 +39,8 @@ async function buildStory(
     job
   );
 
+  log(`Generated ${result.stories.length} stories. Populating now...`, job);
+
   const populatedStories = await populateGeneratedStories(
     result.stories,
     job,

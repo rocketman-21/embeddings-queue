@@ -2,10 +2,19 @@ import { z } from 'zod';
 import { DR_GONZO_ADDRESS } from '../config';
 import { StructuredOutputParser } from '@langchain/core/output_parsers';
 
+const storyEdit = z.object({
+  message: z.string().describe('The edit message'),
+  address: z.string().describe('The address of the editor'),
+  timestamp: z.string().describe('The timestamp of the edit'),
+});
+
+export const storyEditsSchema = z.object({
+  edits: z.array(storyEdit),
+});
+
 export const getStoryObjectSchema = z.object({
   stories: z.array(
     z.object({
-      storyId: z.string().describe('The id of the story').optional(),
       title: z.string().describe('A concise title for the story'),
       summary: z.string().describe('A comprehensive summary of all events'),
       keyPoints: z.array(z.string()).describe('Key points from the story'),
@@ -35,16 +44,6 @@ export const getStoryObjectSchema = z.object({
         .describe(
           'Sources of the story, including the cast URLs if applicable'
         ),
-      edits: z
-        .array(
-          z.object({
-            timestamp: z.string(),
-            message: z.string(),
-            address: z.string(),
-          })
-        )
-        .describe('Edits to the story')
-        .optional(),
       infoNeededToComplete: z
         .string()
         .describe('Information needed to complete the story')

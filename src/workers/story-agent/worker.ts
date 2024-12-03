@@ -62,6 +62,12 @@ export const storyAgentWorker = async (
             log(`Processing story event: ${story.newCastId}`, job);
             const existingStories = await getGrantStories(story.grantId);
 
+            // log how many existing stories
+            log(
+              `Found ${existingStories.length} existing stories for grant: ${story.grantId}`,
+              job
+            );
+
             const rawCasts = await getAllCastsForStories(story.grantId);
 
             if (!rawCasts.length) {
@@ -82,6 +88,12 @@ export const storyAgentWorker = async (
                 cast.storyIds?.includes(story.id)
               );
             });
+
+            // log how many filtered out
+            log(
+              `Filtered out ${rawCasts.length - relevantCasts.length} casts for story event: ${story.newCastId}`,
+              job
+            );
 
             log(
               `Analyzing ${relevantCasts.length} casts for story event: ${story.newCastId}`,
@@ -112,8 +124,6 @@ export const storyAgentWorker = async (
               existingStories,
               [grant.recipient]
             );
-
-            console.log('analysis', analysis);
 
             if (!analysis) {
               throw new Error(

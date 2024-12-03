@@ -1,22 +1,21 @@
-import {
-  ChatPromptTemplate,
-  HumanMessagePromptTemplate,
-  SystemMessagePromptTemplate,
-} from '@langchain/core/prompts';
+export function getSystemMessage(): string {
+  return `You are an expert JSON parser. Answer the user query.`;
+}
 
-export const constructStoryObjectSystemMessage: SystemMessagePromptTemplate =
-  SystemMessagePromptTemplate.fromTemplate(
-    'Answer the user query. Wrap the output in `json` tags\n{format_instructions}'
-  );
+export function getUserMessage(storyGenerationText: string): string {
+  return `
+    Return the relevant story objects in correct json format.
+    Do not paraphrase the text or alter the data from the stories in any way.
+    Include all the fields and data from within the <story> tags.
+    DO NOT ALTER THE STORY IN ANY WAY.
+    Do not under any circumstances alter the story summary. 
+    You are transcribing the story word for word from the text provided.
 
-export const constructStoryObjectUserMessage: HumanMessagePromptTemplate =
-  HumanMessagePromptTemplate.fromTemplate(`
-      Return the relevant story objects in correct json format.
-      Do not paraphrase the text or alter the data from the stories in any way.
-      Include all the fields and data from within the <story> tags.
-      {storyGenerationText}`);
+    Here is the text to transcribe:
+    <stories>
+    ${storyGenerationText}
+    </stories>
 
-export const storyObjectPrompt = ChatPromptTemplate.fromMessages([
-  constructStoryObjectSystemMessage,
-  constructStoryObjectUserMessage,
-]);
+    Return the stories using the schema provided, paraphrasing nothing.
+  `;
+}

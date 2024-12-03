@@ -4,10 +4,17 @@ import { GrantStories } from '../../../database/queries/stories/get-grant-storie
 import { anthropicModelWithFallback } from '../../models';
 import { DR_GONZO_ADDRESS } from '../config';
 import { StringOutputParser } from '@langchain/core/output_parsers';
-import { RunnableSequence } from '@langchain/core/runnables';
-import { storyObjectParser } from './schemas';
-import { storyObjectPrompt } from './prompts/story-object';
+import {
+  anthropicModel,
+  openAIModel,
+  googleAiStudioModel,
+  retryAiCallWithBackoff,
+} from '../../ai';
+import { generateObject } from 'ai';
+import { getStoryObjectSchema } from './schemas';
+import { getSystemMessage, getUserMessage } from './prompts/story-object';
 import { log } from '../../helpers';
+import { processStoryEdits } from './edits';
 
 export async function generateStory(
   combinedContent: {
@@ -23,22 +30,7 @@ export async function generateStory(
     .pipe(anthropicModelWithFallback)
     .pipe(new StringOutputParser());
 
-  const objectChain = storyObjectPrompt
-    .pipe(anthropicModelWithFallback)
-    .pipe(storyObjectParser);
-
-  const storyChain = RunnableSequence.from([
-    generationChain,
-    (input) => {
-      return {
-        storyGenerationText: input,
-        format_instructions: storyObjectParser.getFormatInstructions(),
-      };
-    },
-    objectChain,
-  ]);
-
-  const result = await storyChain.invoke({
+  const result = await generationChain.invoke({
     existingStories: JSON.stringify(existingStories),
     combinedContent: JSON.stringify(combinedContent),
     grantDescription: grant.description,
@@ -46,5 +38,40 @@ export async function generateStory(
     authorAddress: DR_GONZO_ADDRESS,
   });
 
-  return result;
+  console.log({ result });
+
+  log('Generating story object', job);
+
+  const { object } = await retryAiCallWithBackoff(
+    (model) => () =>
+      generateObject({
+        model,
+        schema: getStoryObjectSchema,
+        messages: [
+          {
+            role: 'system',
+            content: getSystemMessage(),
+          },
+          {
+            role: 'user',
+            content: [
+              {
+                type: 'text',
+                text: getUserMessage(result),
+              },
+            ],
+          },
+        ],
+      }),
+    job,
+    [anthropicModel, openAIModel, googleAiStudioModel]
+  );
+
+  object.stories = await processStoryEdits(
+    existingStories,
+    object.stories,
+    job
+  );
+
+  return object;
 }

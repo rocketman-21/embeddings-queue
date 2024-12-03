@@ -57,10 +57,11 @@ export const constructStoryUserMessage: HumanMessagePromptTemplate =
   m. Any casts or external URLs should go in the sources array.
   n. If the story is particularly exciting or impactful with lots of details, feel free to make it longer than a few paragraphs.
   o. If there are a lot of fun exciting details or quotes, feel free to make the paragraphs much more detailed.
-  p. If an existing story already exists for a given topic, impact, or event, don't create a new story.
-  q. However, if the existing story is incomplete, you should add more context to it if you can, and make sure to return the id field of the existing story as part of your updated story.
+  p. If an existing story already exists for a given topic, impact, or event, don't create a new story. Use the existing story, and add updates to it. Do not change the title or tagline of an existing story if you are updating it.
+  q. However, if the existing story is incomplete, you should add more context to it if you can.
   r. Do not forget to return the completeness fields.
   s. Be sure to mention builder names and be specific about the action and impact happening.
+  t. Plan out any edits that need to be made to the story before you write it. Don't feel like you have to make edits though, unless there is new information that needs to be added.
   
   2. Create the story:
   Based on your analysis, construct a story using the following structure:
@@ -113,15 +114,14 @@ export const constructStoryUserMessage: HumanMessagePromptTemplate =
   - DO NOT embed images in markdown from casts that are not a part of the story, or .m3u8 or zora.co links
   - Only use images from casts that are part of the story
   - Make titles unique to grant and include recipient name if needed
+  - Respect the edits array and don't override them, especially if they came from a user (not address {authorAddress})
   - Use specific, descriptive section headers
   - Link to external sources where possible
   - Use personal names rather than impersonal titles
   - Don't be cringy about nounish values
   - Do not use terms like web or web3 or nft or crypto or web culture or blockchain.
   - Stories should highlight impact fitting both grant deliverables and parent flow
-  - Do not add edits if there are none, and do not add infoNeededToComplete if the story is complete.
-  - When making edits, make sure to include the timestamp, message, and your address, but do not change the substance of the story that much, only add major edits if the story is incomplete, otherwise just add more context.
-  - Do not use the "fear and" trope for titles, or the word savage, it's overused.
+  - Do not add infoNeededToComplete if the story is complete.
   
   If you can't create any good, impactful stories related to the grant, it's acceptable to return an empty response.
   
@@ -134,8 +134,11 @@ export const constructStoryUserMessage: HumanMessagePromptTemplate =
   - Dark humor and a cynical tone.
   - Ensure the piece reflects Thompson's unique voice and perspective.
   - Overall pushes a positive sum mindset for builders.
+  
 
   Don't use the word gonzo too much, but do embody the spirit of gonzo journalism.
+  Do not use the "fear and" trope for titles, or the word savage, it's overused.
+
   Sources should always be URLs.
   
   Begin your response by analyzing the information in <story_planning> tags, then proceed to create stories based on your analysis.`
