@@ -171,3 +171,54 @@ export async function pinByHash(
     return false;
   }
 }
+
+export async function pinFile(
+  buffer: Buffer,
+  name: string,
+  job: Job
+): Promise<string | false> {
+  try {
+    const formData = new FormData();
+    const file = new Blob([buffer]);
+    formData.append('file', file, name);
+    formData.append(
+      'pinataOptions',
+      JSON.stringify({
+        cidVersion: 1,
+      })
+    );
+    formData.append(
+      'pinataMetadata',
+      JSON.stringify({
+        name: name,
+      })
+    );
+
+    const response = await fetch(
+      'https://api.pinata.cloud/pinning/pinFileToIPFS',
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${process.env.PINATA_JWT}`,
+        },
+        body: formData,
+      }
+    );
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      log(
+        `Failed to pin file: ${errorData.error?.details || 'Upload failed'}`,
+        job
+      );
+      return false;
+    }
+
+    const data: { IpfsHash: string } = await response.json();
+    log(`Successfully pinned file with hash ${data.IpfsHash}`, job);
+    return `https://${process.env.PINATA_GATEWAY_URL}/ipfs/${data.IpfsHash}`;
+  } catch (error: any) {
+    log(`Error pinning file: ${error.message}`, job);
+    return false;
+  }
+}

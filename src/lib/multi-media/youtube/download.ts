@@ -5,6 +5,9 @@ import { dirname } from 'path';
 import ffmpeg from 'fluent-ffmpeg';
 import ytdl from '@distube/ytdl-core';
 import { ffmpegPath, ffprobePath } from '../video/utils';
+import { downloadAndProcessImage } from '../image/utils';
+import { pinByHash, pinFile } from '../pinata/pin-file';
+import { createHash } from 'crypto';
 
 const MAX_RETRIES = 3;
 const DOWNLOAD_TIMEOUT = 30000; // 30 seconds
@@ -240,3 +243,44 @@ export async function downloadYoutubeVideo(
     throw new Error(`YouTube download failed: ${err.message}`);
   }
 }
+export const pullYoutubeThumbnail = async (url: string, job: Job) => {
+  try {
+    const info = await ytdl.getInfo(url);
+    const thumbnails = info.videoDetails.thumbnails;
+
+    // Get highest quality thumbnail
+    const bestThumbnail = thumbnails.reduce((prev, current) => {
+      return prev.width > current.width ? prev : current;
+    });
+
+    log(`Found YouTube thumbnail: ${bestThumbnail.url}`, job);
+
+    // Download and process the thumbnail image
+    const processedImage = await downloadAndProcessImage(
+      bestThumbnail.url,
+      job
+    );
+    if (!processedImage) {
+      log('Failed to process thumbnail image', job);
+      return null;
+    }
+
+    // Create hash from buffer for pinata
+    const hash = createHash('sha256')
+      .update(processedImage.buffer)
+      .digest('hex');
+    const name = `youtube-thumbnail-${hash}`;
+
+    // Pin to IPFS via Pinata
+    const pinnedUrl = await pinFile(processedImage.buffer, name, job);
+    if (!pinnedUrl) {
+      log('Failed to pin thumbnail to IPFS', job);
+      return null;
+    }
+
+    return pinnedUrl;
+  } catch (err: any) {
+    log(`Error getting YouTube thumbnail: ${err.message}`, job);
+    return null;
+  }
+};

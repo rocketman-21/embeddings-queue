@@ -3,6 +3,7 @@ import { RedisClientType } from 'redis';
 import { describeImage } from '../../multi-media/image/describe-image';
 import { getTokenMetadataForUrl } from '../../../database/queries/token-metadata/get-token-metadata-for-url';
 import { pinByHash } from '../../multi-media/pinata/pin-file';
+import { pullYoutubeThumbnail } from '../../multi-media/youtube/download';
 
 export interface MediaInfo {
   url: string;
@@ -43,6 +44,17 @@ export const processImageUrl = async (
     description = await describeImage(url, redisClient, job);
   }
   return { url, description };
+};
+
+export const getYoutubeThumbnail = async (
+  url: string,
+  job: Job,
+  redisClient: RedisClientType
+) => {
+  const thumbnailUrl = await pullYoutubeThumbnail(url, job);
+  if (!thumbnailUrl) return null;
+  const description = await describeImage(thumbnailUrl, redisClient, job);
+  return { url: thumbnailUrl, description };
 };
 
 export const processZoraUrl = async (
@@ -117,7 +129,15 @@ export const processEmbed = async (
       return await processZoraUrl(url, redisClient, job);
     } else if (url.includes('m3u8') && !imageOnly) {
       return { url, description: null };
+    } else if (isYoutubeUrl(url) && !isUrlInArray(url, existingUrls)) {
+      return await getYoutubeThumbnail(url, job, redisClient);
     }
   }
   return null;
+};
+
+export const isYoutubeUrl = (url: string) => {
+  const youtubeRegex =
+    /^(?:https?:\/\/)?(?:www\.)?(?:m\.)?(youtube\.com|youtu\.be)/;
+  return youtubeRegex.test(url);
 };
