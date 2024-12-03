@@ -18,12 +18,14 @@ export const anthropicModel = new ChatAnthropic({
   apiKey: anthropicApiKey,
   model: 'claude-3-5-sonnet-20241022',
   maxTokens: 8192,
+  cache: false,
 });
 
 export const openAIModel = new ChatOpenAI({
   apiKey: openaiApiKey,
   model: 'gpt-4o-2024-11-20',
   maxTokens: 8192,
+  cache: false,
 });
 
 // Combine the primary model with the fallback

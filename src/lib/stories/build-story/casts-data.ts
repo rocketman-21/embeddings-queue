@@ -19,7 +19,7 @@ export async function prepareCastData(
   );
   const castDetails = await Promise.all(castPromises);
 
-  log('Preparing cast data', job);
+  log(`Preparing cast data for ${casts.length} casts`, job);
 
   // Combine all cast content and summaries
   return castDetails

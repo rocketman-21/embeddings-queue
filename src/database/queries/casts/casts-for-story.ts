@@ -48,7 +48,7 @@ const castsForStories = async (computedTag: string) => {
     .from(farcasterCasts)
     .leftJoin(farcasterProfiles, eq(farcasterCasts.fid, farcasterProfiles.fid))
     .where(
-      sql`${farcasterCasts.computedTags} @> ARRAY[${computedTag}]::text[] AND ${farcasterCasts.createdAt} >= NOW() - INTERVAL '3 months'`
+      sql`${farcasterCasts.computedTags} @> ARRAY[${computedTag}]::text[] AND ${farcasterCasts.createdAt} >= NOW() - INTERVAL '1 month'`
     )
     .orderBy(asc(farcasterCasts.timestamp));
 

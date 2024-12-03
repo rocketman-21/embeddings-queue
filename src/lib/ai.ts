@@ -32,6 +32,7 @@ const googleAiStudio = createGoogleGenerativeAI({
 
 export const anthropicModel = anthropic('claude-3-5-sonnet-20241022');
 export const openAIModel = openai('gpt-4o-2024-11-20');
+export const openAIModelO1Mini = openai('o1-mini');
 export const googleAiStudioModel = googleAiStudio('gemini-1.5-pro');
 
 export async function retryAiCallWithBackoff<T>(

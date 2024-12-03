@@ -1,41 +1,40 @@
-import {
-  ChatPromptTemplate,
-  HumanMessagePromptTemplate,
-  SystemMessagePromptTemplate,
-  AIMessagePromptTemplate,
-} from '@langchain/core/prompts';
+import { GrantStories } from '../../../../database/queries/stories/get-grant-stories';
 
-export const constructStorySystemMessage: SystemMessagePromptTemplate =
-  SystemMessagePromptTemplate.fromTemplate(
-    'You are Hunter S. Thompson, writing a story about the grant.'
-  );
+export function getGenerateStorySystemMessage(): string {
+  return 'You are Hunter S. Thompson, writing a story about the grant.';
+}
 
-export const constructStoryUserMessage: HumanMessagePromptTemplate =
-  HumanMessagePromptTemplate.fromTemplate(
-    `You are an expert journalist tasked with analyzing grant-related posts and constructing newsworthy stories about the impact of grant recipients. Your goal is to create compelling narratives that showcase the real-world effects of the funded projects.
+export function getGenerateStoryMessage(
+  existingStories: GrantStories,
+  combinedContent: { content: string; timestamp: Date | null }[],
+  grantDescription: string,
+  parentGrantDescription: string,
+  authorAddress: string
+): string {
+  return `You are an expert journalist tasked with analyzing grant-related posts and constructing newsworthy stories about the impact of grant recipients. Your goal is to create compelling narratives that showcase the real-world effects of the funded projects.
   
   You are analyzing a series of related posts to identify and construct multiple distinct newsworthy stories. Group related posts together into coherent narratives, identifying major stories or themes. For each story, consider the chronological order, relationships between posts, and extract key information. Focus on building narratives that capture the full context and progression of events. Prioritize the most significant and newsworthy stories from the content. If you don't have enough details to build a full story, you can still return a partial story. Only build stories that are related to the grant or impact based on the work expected from the grant.
   
   First, review the following context:
+
+  New Casts:
+  <casts>
+  ${JSON.stringify(combinedContent)}
+  </casts>
   
   Existing Stories:
   <stories>
-  {existingStories}
+  ${JSON.stringify(existingStories)}
   </stories>
-  
-  New Casts:
-  <casts>
-  {combinedContent}
-  </casts>
   
   Grant Description:
   <grant>
-  {grantDescription}
+  ${grantDescription}
   </grant>
   
   Parent Flow Description:
   <flow>
-  {parentGrantDescription}
+  ${parentGrantDescription}
   </flow>
   
   Now, follow these steps to create impactful stories:
@@ -62,6 +61,8 @@ export const constructStoryUserMessage: HumanMessagePromptTemplate =
   r. Do not forget to return the completeness fields.
   s. Be sure to mention builder names and be specific about the action and impact happening.
   t. Plan out any edits that need to be made to the story before you write it. Don't feel like you have to make edits though, unless there is new information that needs to be added.
+  u. Only make edits if there is new information that needs to be added. Do not duplicate or otherwise paraphrase existing information in the story with your edits, incoroprate the new information naturally into the existing story structure.
+  w. Do make edits based on sources or casts that are already included in the story.
   
   2. Create the story:
   Based on your analysis, construct a story using the following structure:
@@ -95,9 +96,31 @@ export const constructStoryUserMessage: HumanMessagePromptTemplate =
     "edits": [
         "timestamp": "YYYY-MM-DDTHH:mm:ss.sssZ", 
         "message": "Edit description",
-        "address": "ETH address of the editor (yours is {authorAddress})"
+        "address": "ETH address of the editor (yours is ${authorAddress})"
     ]
   </story>
+
+  <story_update>
+  Any updates to existing stories should be added here. Do not change the title or tagline of an existing story if you are updating it.
+  Do not repeat information or add new sections that are similar to existing sections in the story.
+  If needed, you can edit existing sections in the summary, but do not repeat information or add new sections that are similar to existing sections in the story.
+
+    [
+    "id": "string - ID of the existing story to update",
+    "edits": [
+      "timestamp": "YYYY-MM-DDTHH:mm:ss.sssZ",
+      "message": "Description of what was updated",
+      "address": "ETH address of the editor"
+    ],
+    "timeline": [
+      "timestamp": "YYYY-MM-DDTHH:mm:ss.sssZ",
+      "event": "Description of new event"
+    ],
+    "newSources": ["Array of new source URLs to add"],
+    "editedContent": "Text to append or edit in the story summary", 
+    "newCastHashes": ["Array of new cast hashes to add"]
+  ]
+  </story_update>
   
   Important guidelines:
   - Focus only on information related to the grant and its impact
@@ -114,7 +137,7 @@ export const constructStoryUserMessage: HumanMessagePromptTemplate =
   - DO NOT embed images in markdown from casts that are not a part of the story, or .m3u8 or zora.co links
   - Only use images from casts that are part of the story
   - Make titles unique to grant and include recipient name if needed
-  - Respect the edits array and don't override them, especially if they came from a user (not address {authorAddress})
+  - Respect the edits array and don't override them, especially if they came from a user (not address ${authorAddress})
   - Use specific, descriptive section headers
   - Link to external sources where possible
   - Use personal names rather than impersonal titles
@@ -123,6 +146,7 @@ export const constructStoryUserMessage: HumanMessagePromptTemplate =
   - Stories should highlight impact fitting both grant deliverables and parent flow
   - Do not add infoNeededToComplete if the story is complete.
   - Do not under any circumstances change the title or tagline of an existing story.
+  - If a source or cast hash is already in the story, do not add it again, and assume it has already been written about in the story summary section. Do not duplicate information in the summary or in your edits.
   
   If you can't create any good, impactful stories related to the grant, it's acceptable to return an empty response.
   
@@ -142,14 +166,5 @@ export const constructStoryUserMessage: HumanMessagePromptTemplate =
 
   Sources should always be URLs.
   
-  Begin your response by analyzing the information in <story_planning> tags, then proceed to create stories based on your analysis.`
-  );
-
-const assistantStart: AIMessagePromptTemplate =
-  AIMessagePromptTemplate.fromTemplate(`<story_planning>`);
-
-export const storyGenerationPrompt = ChatPromptTemplate.fromMessages([
-  constructStorySystemMessage,
-  constructStoryUserMessage,
-  assistantStart,
-]);
+  Begin your response by analyzing the information in <story_planning> tags, then proceed to create stories based on your analysis.`;
+}

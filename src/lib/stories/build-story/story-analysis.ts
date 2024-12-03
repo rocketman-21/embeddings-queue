@@ -1,18 +1,22 @@
 import { Job } from 'bullmq';
-import { storyGenerationPrompt } from './prompts/generate-story';
 import { GrantStories } from '../../../database/queries/stories/get-grant-stories';
-import { anthropicModelWithFallback } from '../../models';
 import { DR_GONZO_ADDRESS } from '../config';
-import { StringOutputParser } from '@langchain/core/output_parsers';
 import {
   anthropicModel,
   openAIModel,
   googleAiStudioModel,
   retryAiCallWithBackoff,
 } from '../../ai';
-import { generateObject } from 'ai';
+import { generateObject, generateText } from 'ai';
 import { getStoryObjectSchema } from './schemas';
-import { getSystemMessage, getUserMessage } from './prompts/story-object';
+import {
+  getStoryObjectSystemMessage,
+  getStoryObjectMessage,
+} from './prompts/story-object';
+import {
+  getGenerateStorySystemMessage,
+  getGenerateStoryMessage,
+} from './prompts/generate-story';
 import { log } from '../../helpers';
 import { processStories } from './edits';
 import { LimitedStory } from './populate-story-data';
@@ -27,19 +31,30 @@ export async function generateStory(
   parentGrant: { description: string },
   job: Job
 ): Promise<LimitedStory[]> {
-  const generationChain = storyGenerationPrompt
-    .pipe(anthropicModelWithFallback)
-    .pipe(new StringOutputParser());
-
-  const result = await generationChain.invoke({
-    existingStories: JSON.stringify(existingStories),
-    combinedContent: JSON.stringify(combinedContent),
-    grantDescription: grant.description,
-    parentGrantDescription: parentGrant.description,
-    authorAddress: DR_GONZO_ADDRESS,
-  });
-
-  console.log({ result });
+  const result = await retryAiCallWithBackoff(
+    (model) => () =>
+      generateText({
+        model,
+        messages: [
+          {
+            role: 'system',
+            content: getGenerateStorySystemMessage(),
+          },
+          {
+            role: 'user',
+            content: getGenerateStoryMessage(
+              existingStories,
+              combinedContent,
+              grant.description,
+              parentGrant.description,
+              DR_GONZO_ADDRESS
+            ),
+          },
+        ],
+      }),
+    job,
+    [anthropicModel]
+  );
 
   log('Generating story object', job);
 
@@ -51,14 +66,14 @@ export async function generateStory(
         messages: [
           {
             role: 'system',
-            content: getSystemMessage(),
+            content: getStoryObjectSystemMessage(),
           },
           {
             role: 'user',
             content: [
               {
                 type: 'text',
-                text: getUserMessage(result),
+                text: getStoryObjectMessage(result.text, existingStories),
               },
             ],
           },

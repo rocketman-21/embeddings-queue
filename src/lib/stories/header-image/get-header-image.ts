@@ -30,6 +30,8 @@ export async function getHeaderImage(
   const castHashes = story.castHashes.map((hash) => getCastHash(hash));
   if (!castHashes.length) return null;
 
+  if (story.headerImage) return story.headerImage;
+
   const relevantCasts = await farcasterDb
     .select({
       embeds: farcasterCasts.embeds,

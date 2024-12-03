@@ -8,7 +8,7 @@ import { CastForStory } from '../../../database/queries/casts/casts-for-story';
 
 export type LimitedStory = Omit<
   StoryAnalysis,
-  'mediaUrls' | 'headerImage' | 'createdAt' | 'id'
+  'mediaUrls' | 'createdAt' | 'id'
 > & { id?: string };
 
 export async function populateGeneratedStories(

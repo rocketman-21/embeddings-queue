@@ -28,11 +28,19 @@ export async function processStories(
     return {
       ...story,
       participants: existingStory?.participants || [],
+      headerImage: existingStory?.headerImage || '',
     };
   });
 
   // Find matching stories and generate edits
-  const editsMap = new Map();
+  const editsMap = new Map<
+    string,
+    {
+      timestamp: string;
+      message: string;
+      address: string;
+    }[]
+  >();
 
   for (const story of stories) {
     const key = `${story.title}:${story.tagline}`;
@@ -60,6 +68,8 @@ export async function processStories(
     const key = `${story.title}:${story.tagline}`;
     const existingStory = existingStoriesMap.get(key);
     const storyEdits = existingStory ? editsMap.get(existingStory.id) : [];
+
+    console.log({ storyEdits });
 
     return {
       ...story,
