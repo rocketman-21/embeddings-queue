@@ -56,7 +56,8 @@ export async function generateStory(
     [anthropicModel]
   );
 
-  console.log('result', result.text);
+  log('Generated story data', job);
+  log(result.text, job);
 
   log('Generating story object', job);
 
