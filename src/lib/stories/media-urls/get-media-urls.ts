@@ -5,7 +5,7 @@ import { farcasterDb } from '../../../database/farcasterDb';
 import { RedisClientType } from 'redis';
 import { log } from '../../helpers';
 import { getCastHash } from '../../casts/utils';
-import { processEmbed, processZoraUrl } from '../utils/media-utils';
+import { MediaInfo, processEmbed, processZoraUrl } from '../utils/media-utils';
 import { LimitedStory } from '../build-story/populate-story-data';
 
 const isUrlInArray = (url: string, imageUrls: string[]) => {
@@ -37,6 +37,7 @@ export async function getMediaUrls(
 
   // Extract media URLs from cast embeds
   const mediaUrls: string[] = [];
+  const mediaDescriptions: MediaInfo[] = [];
 
   // Process cast embeds
   for (let i = 0; i < relevantCasts.length; i++) {
@@ -58,6 +59,7 @@ export async function getMediaUrls(
       );
       if (result && !isUrlInArray(result.url, mediaUrls)) {
         mediaUrls.push(result.url);
+        mediaDescriptions.push(result);
       }
     }
   }
@@ -69,6 +71,7 @@ export async function getMediaUrls(
         const result = await processZoraUrl(url, redisClient, job);
         if (result && !isUrlInArray(result.url, mediaUrls)) {
           mediaUrls.push(result.url);
+          mediaDescriptions.push(result);
         }
       }
     }
@@ -79,6 +82,9 @@ export async function getMediaUrls(
     const bIsM3u8 = b.includes('m3u8');
     if (aIsM3u8 && !bIsM3u8) return -1;
     if (!aIsM3u8 && bIsM3u8) return 1;
-    return 0;
+
+    const aDesc = mediaDescriptions.find((m) => m.url === a)?.description || '';
+    const bDesc = mediaDescriptions.find((m) => m.url === b)?.description || '';
+    return bDesc.length - aDesc.length;
   });
 }
