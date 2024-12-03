@@ -60,18 +60,18 @@ export const storyAgentWorker = async (
 
             const rawCasts = await getAllCastsForStories(story.grantId);
 
-            if (!rawCasts.length) {
+            const relevantCasts = filterRelevantCasts(
+              rawCasts,
+              existingStories
+            );
+
+            if (!relevantCasts.length) {
               log(
                 `No casts found for story event: ${story.newCastId}, skipping`,
                 job
               );
               continue;
             }
-
-            const relevantCasts = filterRelevantCasts(
-              rawCasts,
-              existingStories
-            );
 
             log(
               `Filtered out ${rawCasts.length - relevantCasts.length} casts for story event: ${story.newCastId}`,

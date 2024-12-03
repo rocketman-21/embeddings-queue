@@ -165,6 +165,8 @@ export function getGenerateStoryMessage(
   Do not use the "fear and" trope for titles, or the word savage, it's overused.
 
   Sources should always be URLs.
+
+  Do not write stories about topics that are not related to the grant or the parent flow.
   
   Begin your response by analyzing the information in <story_planning> tags, then proceed to create stories based on your analysis.`;
 }
