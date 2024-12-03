@@ -8,25 +8,18 @@ import { eq } from 'drizzle-orm';
 import { getAllCastsForStories } from '../../database/queries/casts/casts-for-story';
 import { flowsDb } from '../../database/flowsDb';
 import { stories } from '../../database/flows-schema';
-import { InferInsertModel, sql } from 'drizzle-orm';
+import { sql } from 'drizzle-orm';
 import { getGrantStories } from '../../database/queries/stories/get-grant-stories';
 import { farcasterDb } from '../../database/farcasterDb';
 import { farcasterCasts } from '../../database/farcaster-schema';
 import { getCastHash } from '../../lib/casts/utils';
-import { cleanTextForEmbedding } from '../../lib/embedding/utils';
-
-const STORY_LOCK_PREFIX = 'story-locked-v1:';
-const LOCK_TTL = 4 * 60 * 60 * 1000; // 4 hours in milliseconds
-
-interface LockData {
-  timestamp: number;
-  ttl: number;
-}
-
-// Helper function to normalize hashes
-function normalizeHash(hash: string): string {
-  return hash.replace(/^0x/, '').toLowerCase();
-}
+import {
+  acquireLock,
+  releaseLock,
+  filterRelevantCasts,
+  prepareStoryForInsertion,
+  createEmbeddingJob,
+} from './worker-helpers';
 
 export const storyAgentWorker = async (
   queueName: string,
@@ -47,27 +40,19 @@ export const storyAgentWorker = async (
       try {
         const results = [];
         for (const story of storiesJobData) {
-          // Check if this story is already being processed
-          const lockKey = `${STORY_LOCK_PREFIX}${story.grantId}`;
-          // Attempt to acquire the lock
-          const lockAcquired = await redisClient.set(lockKey, 'locked', {
-            NX: true,
-            PX: LOCK_TTL,
-          });
+          const lockAcquired = await acquireLock(redisClient, story.grantId);
 
           if (!lockAcquired) {
             log(
               `Story ${story.grantId} is already being processed or was recently processed, skipping`,
               job
             );
-            continue; // Skip to the next story
+            continue;
           }
 
           try {
             log(`Processing story event: ${story.newCastId}`, job);
             const existingStories = await getGrantStories(story.grantId);
-
-            // log how many existing stories
             log(
               `Found ${existingStories.length} existing stories for grant: ${story.grantId}`,
               job
@@ -83,30 +68,11 @@ export const storyAgentWorker = async (
               continue;
             }
 
-            // Filter out casts that already belong to existing stories
-            const relevantCasts = rawCasts.filter((cast) => {
-              // If cast has no storyIds or empty array, include it
-              if (!cast.storyIds || cast.storyIds.length === 0) return true;
+            const relevantCasts = filterRelevantCasts(
+              rawCasts,
+              existingStories
+            );
 
-              const castHash = cast.hash
-                ? normalizeHash(cast.hash.toString('hex'))
-                : '';
-
-              // Check if cast belongs to any existing story by story ID
-              const belongsToStoryById = existingStories.some((story) =>
-                cast.storyIds?.includes(story.id)
-              );
-
-              // Check if cast hash is in any of the existing story's sources
-              const hashInSources = existingStories.some((story) =>
-                story.sources?.some((source) => source.includes(castHash))
-              );
-
-              // Return true if cast doesn't belong to any story and isn't referenced in sources
-              return !belongsToStoryById && !hashInSources;
-            });
-
-            // log how many filtered out
             log(
               `Filtered out ${rawCasts.length - relevantCasts.length} casts for story event: ${story.newCastId}`,
               job
@@ -127,7 +93,6 @@ export const storyAgentWorker = async (
               );
             }
 
-            // Generate story analysis
             const analysis = await buildStories(
               redisClient,
               relevantCasts,
@@ -142,13 +107,7 @@ export const storyAgentWorker = async (
               [grant.recipient]
             );
 
-            if (!analysis) {
-              throw new Error(
-                `No analysis found for story event: ${story.newCastId}`
-              );
-            }
-
-            if (!analysis.length) {
+            if (!analysis || !analysis.length) {
               log(
                 `No stories found for story event: ${story.newCastId}, skipping`,
                 job
@@ -157,34 +116,9 @@ export const storyAgentWorker = async (
             }
 
             log(`Generated story analysis for ID: ${story.newCastId}`, job);
-            type StoryInsertModel = InferInsertModel<typeof stories>;
 
-            // Bulk insert stories into flowsDb
-            const storiesToInsert: StoryInsertModel[] = analysis.map(
-              (storyAnalysis) => ({
-                id: storyAnalysis.id || crypto.randomUUID(),
-                title: storyAnalysis.title,
-                summary: storyAnalysis.summary,
-                createdAt: new Date(storyAnalysis.createdAt),
-                updatedAt: new Date(storyAnalysis.createdAt),
-                keyPoints: storyAnalysis.keyPoints,
-                participants: storyAnalysis.participants,
-                headerImage: storyAnalysis.headerImage,
-                timeline: storyAnalysis.timeline,
-                sentiment: storyAnalysis.sentiment,
-                completeness: storyAnalysis.completeness.toString(),
-                complete: storyAnalysis.complete,
-                sources: Array.from(new Set(storyAnalysis.sources)),
-                mediaUrls: Array.from(new Set(storyAnalysis.mediaUrls)),
-                author: storyAnalysis.author?.toLowerCase(),
-                grantIds: [grant.id],
-                parentFlowIds: [parentGrant.id],
-                tagline: storyAnalysis.tagline,
-                edits: storyAnalysis.edits,
-                castHashes: Array.from(new Set(storyAnalysis.castHashes)),
-                infoNeededToComplete: storyAnalysis.infoNeededToComplete,
-                mintUrls: storyAnalysis.mintUrls,
-              })
+            const storiesToInsert = analysis.map((storyAnalysis) =>
+              prepareStoryForInsertion(storyAnalysis, grant.id, parentGrant.id)
             );
 
             await flowsDb
@@ -214,7 +148,6 @@ export const storyAgentWorker = async (
                 },
               });
 
-            // Create mapping of cast hashes to story IDs
             const castHashToStoryId = analysis.reduce(
               (acc, story, index) => {
                 story.castHashes.forEach((hash) => {
@@ -225,7 +158,6 @@ export const storyAgentWorker = async (
               {} as Record<string, string>
             );
 
-            // Update each cast with its corresponding story ID
             for (const [hash, storyId] of Object.entries(castHashToStoryId)) {
               const castHash = getCastHash(hash);
               await farcasterDb
@@ -241,20 +173,7 @@ export const storyAgentWorker = async (
               job
             );
 
-            // Add to embedding jobs queue
-            analysis.forEach((storyAnalysis) => {
-              embeddingJobs.push({
-                type: 'story',
-                content: cleanTextForEmbedding(storyAnalysis.summary),
-                rawContent: storyAnalysis.summary,
-                externalId: storyAnalysis.id,
-                groups: [],
-                users: storyAnalysis.participants,
-                externalUrl: `https://flows.wtf/story/${storyAnalysis.id}`,
-                tags: [],
-                urls: storyAnalysis.mediaUrls,
-              });
-            });
+            embeddingJobs.push(...analysis.map(createEmbeddingJob));
 
             log(`Added story analysis to embedding queue`, job);
 
@@ -263,17 +182,15 @@ export const storyAgentWorker = async (
               processed: true,
             });
 
-            await redisClient.del(lockKey);
+            await releaseLock(redisClient, story.grantId);
           } catch (error) {
-            // Clear lock if there's an error
-            await redisClient.del(lockKey);
+            await releaseLock(redisClient, story.grantId);
             console.error(`Error processing story ${story.newCastId}:`, error);
             throw error;
           }
         }
 
         const queueJobName = `embed-story-${Date.now()}`;
-
         const queueJob = await bulkEmbeddingsQueue.add(
           queueJobName,
           embeddingJobs

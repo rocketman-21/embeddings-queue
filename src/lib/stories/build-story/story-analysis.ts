@@ -56,6 +56,8 @@ export async function generateStory(
     [anthropicModel]
   );
 
+  console.log('result', result.text);
+
   log('Generating story object', job);
 
   const { object } = await retryAiCallWithBackoff(
