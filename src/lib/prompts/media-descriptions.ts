@@ -10,7 +10,9 @@ Try to ascertain the locations of the people and places in the video.
 Make sure to mention what types of activities are happening in the video,
 or otherwise what type of work is being done.
 If there are any things said in the video, make sure to include them in the description as quotes and who they are said by.
-Always describe in vivid detail the people in the video and what they look like, from their facial features, hair color, height, weight, clothing, and anything else that might be relevant.`;
+Always describe in vivid detail the people in the video and what they look like, from their facial features, hair color, height, weight, clothing, and anything else that might be relevant.
+Ensure you describe the actions of the people in the video, and what they are doing.
+Ensure if you are describing text seen in the video, make sure to describe whether the text is on an overlay over the video, or if it's part of the video itself, or if it's a recording of a website, app, or social platform.`;
 
 export const imageDescriptionPrompt =
   () => `Please provide a detailed description of the following image, 

@@ -9,10 +9,7 @@ import { log } from '../../helpers';
 import { videoDescriptionPrompt } from '../../prompts/media-descriptions';
 import { downloadYoutubeVideo } from './download';
 import { retryWithExponentialBackoff } from '../../retry/retry-fetch';
-import {
-  cacheYoutubeDescription,
-  getCachedYoutubeDescription,
-} from './cache';
+import { cacheYoutubeDescription, getCachedYoutubeDescription } from './cache';
 import { uploadAndWaitForProcessing } from '../../google/ai-file-manager';
 
 if (!process.env.GOOGLE_AI_STUDIO_KEY) {
@@ -48,7 +45,7 @@ export async function describeYoutubeVideo(
   // Create unique directory name based on video URL hash
   const videoHash = crypto.createHash('md5').update(videoUrl).digest('hex');
   const videoDir = path.resolve(__dirname, videoHash);
-  const localFilePath = path.join(videoDir, 'yt-video');
+  const localFilePath = path.join(videoDir, 'yt-video.mp4');
 
   try {
     // Create directory if it doesn't exist
@@ -56,7 +53,10 @@ export async function describeYoutubeVideo(
       fs.mkdirSync(videoDir, { recursive: true });
     }
 
-    log('Starting YouTube video download and processing', job);
+    log(
+      `Starting YouTube video download and processing for: ${videoUrl} saving to: ${localFilePath}`,
+      job
+    );
     // Download video using YouTube-specific downloader
     await downloadYoutubeVideo(videoUrl, localFilePath, job);
 

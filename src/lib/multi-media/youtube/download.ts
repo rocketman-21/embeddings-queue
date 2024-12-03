@@ -11,7 +11,7 @@ const DOWNLOAD_TIMEOUT = 30000; // 30 seconds
 const RETRY_DELAY = 5000; // 5 seconds
 
 async function delay(ms: number): Promise<void> {
-  return new Promise(resolve => setTimeout(resolve, ms));
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 async function downloadStream(
@@ -28,9 +28,10 @@ async function downloadStream(
           ...options,
           requestOptions: {
             headers: {
-              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+              'User-Agent':
+                'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
             },
-          }
+          },
         });
 
         let lastProgress = Date.now();
@@ -45,7 +46,7 @@ async function downloadStream(
         }, 5000);
 
         const writer = createWriteStream(outputPath);
-        
+
         stream.once('response', () => {
           hasStarted = true;
           log(`${streamType} stream started`, job);
@@ -54,7 +55,8 @@ async function downloadStream(
         stream.on('progress', (_, downloaded, total) => {
           lastProgress = Date.now();
           const percent = Math.round((downloaded / total) * 100);
-          if (percent % 10 === 0 && percent !== lastLoggedPercent) { // Log every 10% but only once
+          if (percent % 10 === 0 && percent !== lastLoggedPercent) {
+            // Log every 10% but only once
             lastLoggedPercent = percent;
             log(`${streamType} download progress: ${percent}%`, job);
           }
@@ -83,13 +85,21 @@ async function downloadStream(
 
       return; // Success - exit retry loop
     } catch (err: any) {
-      log(`${streamType} download attempt ${attempt} failed: ${err.message}`, job);
-      
+      log(
+        `${streamType} download attempt ${attempt} failed: ${err.message}`,
+        job
+      );
+
       if (attempt < MAX_RETRIES) {
-        log(`Retrying ${streamType} download in ${RETRY_DELAY/1000} seconds...`, job);
+        log(
+          `Retrying ${streamType} download in ${RETRY_DELAY / 1000} seconds...`,
+          job
+        );
         await delay(RETRY_DELAY);
       } else {
-        throw new Error(`${streamType} download failed after ${MAX_RETRIES} attempts`);
+        throw new Error(
+          `${streamType} download failed after ${MAX_RETRIES} attempts`
+        );
       }
     }
   }
@@ -116,7 +126,7 @@ export async function downloadYoutubeVideo(
   const tempVideoPath = `${outputPath}.video.mp4`;
 
   const cleanup = () => {
-    [tempAudioPath, tempVideoPath].forEach(path => {
+    [tempAudioPath, tempVideoPath].forEach((path) => {
       if (existsSync(path)) {
         unlinkSync(path);
         log(`Cleaned up: ${path}`, job);
@@ -132,28 +142,62 @@ export async function downloadYoutubeVideo(
     // Select lowest quality audio format that's still audible
     const audioFormat = ytdl.chooseFormat(videoInfo.formats, {
       quality: 'lowestaudio',
-      filter: 'audioonly'
+      filter: 'audioonly',
     });
     log(`Selected audio format: ${audioFormat.mimeType}`, job);
 
     // Download audio
-    await downloadStream(url, tempAudioPath, {
-      format: audioFormat,
-      filter: 'audioonly'
-    }, 'audio', job);
+    await downloadStream(
+      url,
+      tempAudioPath,
+      {
+        format: audioFormat,
+        filter: 'audioonly',
+      },
+      'audio',
+      job
+    );
 
-    // Select lowest quality video format to save bandwidth
-    const videoFormat = ytdl.chooseFormat(videoInfo.formats, {
-      quality: 'lowestvideo',
-      filter: 'videoonly'
+    // Log all available video qualities
+    const videoFormats = ytdl.filterFormats(videoInfo.formats, 'videoonly');
+
+    // Sort formats by resolution (highest to lowest) and deduplicate
+    const sortedFormats = Array.from(
+      new Set(videoFormats.map((f) => f.qualityLabel))
+    ).sort((a, b) => {
+      const aRes = parseInt(a.replace('p', ''));
+      const bRes = parseInt(b.replace('p', ''));
+      return bRes - aRes;
     });
-    log(`Selected video format: ${videoFormat.mimeType}`, job);
+
+    log(`Available video formats: ${sortedFormats.join(', ')}`, job);
+
+    // Select 720p if available, otherwise highest quality under 720p
+    const targetQuality =
+      sortedFormats.find((q) => parseInt(q) <= 720) ||
+      sortedFormats[sortedFormats.length - 1];
+    const videoFormat = ytdl.chooseFormat(videoInfo.formats, {
+      filter: (format) => format.qualityLabel === targetQuality,
+    });
+    if (!videoFormat) {
+      throw new Error(`No video format found for quality: ${targetQuality}`);
+    }
+    log(
+      `Selected video format: ${videoFormat.mimeType} (${videoFormat.qualityLabel})`,
+      job
+    );
 
     // Download video
-    await downloadStream(url, tempVideoPath, {
-      format: videoFormat,
-      filter: 'videoonly'
-    }, 'video', job);
+    await downloadStream(
+      url,
+      tempVideoPath,
+      {
+        format: videoFormat,
+        filter: 'videoonly',
+      },
+      'video',
+      job
+    );
 
     // Merge streams
     log('Merging audio and video streams...', job);
@@ -191,7 +235,6 @@ export async function downloadYoutubeVideo(
           reject(err);
         });
     });
-
   } catch (err: any) {
     cleanup();
     throw new Error(`YouTube download failed: ${err.message}`);
