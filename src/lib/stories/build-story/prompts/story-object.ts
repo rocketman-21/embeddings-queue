@@ -28,7 +28,8 @@ export function getStoryObjectMessage(
     If the text contains story_update tags, update the matching stories from existingStories with the new information.
     For each story_update:
     - Find the story in existingStories with matching id
-    - Incorporate the editedContent to the story's summary, incorporating it naturally into the existing story structure
+    - Incorporate the editedContent to the story's summary, incorporating it naturally into the existing story structure and specified section. 
+    - However, try not to remove any information from an edited section, but instead add to it.
     - Add the newSources to the story's sources
     - Add the newCastHashes to the story's castHashes
     

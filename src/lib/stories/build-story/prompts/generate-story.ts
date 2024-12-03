@@ -117,7 +117,7 @@ export function getGenerateStoryMessage(
       "event": "Description of new event"
     ],
     "newSources": ["Array of new source URLs to add"],
-    "editedContent": "Text to append or edit in the story summary and what section of the story summary the new information should be added in", 
+    "editedContent": "Text to append or edit in the story summary and what section of the story summary the new information should be added in, and whether the content for that section should be added, replaced, or removed", 
     "newCastHashes": ["Array of new cast hashes to add"]
   ]
   </story_update>
