@@ -31,7 +31,7 @@ async function buildStory(
 
   log('Generating stories', job);
 
-  const result = await generateStory(
+  const newStories = await generateStory(
     combinedContent,
     existingStories,
     grant,
@@ -39,10 +39,10 @@ async function buildStory(
     job
   );
 
-  log(`Generated ${result.stories.length} stories. Populating now...`, job);
+  log(`Generated ${newStories.length} stories. Populating now...`, job);
 
   const populatedStories = await populateGeneratedStories(
-    result.stories,
+    newStories,
     job,
     redisClient,
     casts,

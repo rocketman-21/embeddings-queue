@@ -10,17 +10,26 @@ import {
   retryAiCallWithBackoff,
 } from '../../ai';
 import { DR_GONZO_ADDRESS } from '../config';
+import { LimitedStory } from './populate-story-data';
 
 // Processes edits for stories by comparing existing and new stories
-export async function processStoryEdits(
+export async function processStories(
   existingStories: GrantStories,
   stories: (typeof getStoryObjectSchema)['_type']['stories'],
   job: Job
-) {
+): Promise<LimitedStory[]> {
   // Create map of existing stories by title+tagline for faster lookup
   const existingStoriesMap = new Map(
     existingStories.map((story) => [`${story.title}:${story.tagline}`, story])
   );
+  const processedStories = stories.map((story) => {
+    const key = `${story.title}:${story.tagline}`;
+    const existingStory = existingStoriesMap.get(key);
+    return {
+      ...story,
+      participants: existingStory?.participants || [],
+    };
+  });
 
   // Find matching stories and generate edits
   const editsMap = new Map();
@@ -37,7 +46,7 @@ export async function processStoryEdits(
 
   if (editsMap.size === 0) {
     log('No existing stories found, skipping edits', job);
-    return stories;
+    return processedStories;
   }
 
   const totalEdits = Array.from(editsMap.values()).reduce(
@@ -47,7 +56,7 @@ export async function processStoryEdits(
   log(`Generated ${totalEdits} edits`, job);
 
   // Add generated edits to stories
-  return stories.map((story) => {
+  return processedStories.map((story) => {
     const key = `${story.title}:${story.tagline}`;
     const existingStory = existingStoriesMap.get(key);
     const storyEdits = existingStory ? editsMap.get(existingStory.id) : [];

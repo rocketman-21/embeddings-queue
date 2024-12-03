@@ -16,6 +16,8 @@ export const storeEmbedding = async (
     // we only want to store one builder profile per fid
     // assumes externalId is fid
     await deleteEmbeddingForBuilderProfile(job.externalId);
+  } else if (job.type === 'story') {
+    await deleteEmbeddingForStory(job.externalId);
   }
 
   await db
@@ -66,4 +68,10 @@ export const deleteEmbeddingForBuilderProfile = async (externalId: string) => {
         eq(embeddings.externalId, externalId)
       )
     );
+};
+
+export const deleteEmbeddingForStory = async (id: string) => {
+  await db
+    .delete(embeddings)
+    .where(eq(embeddings.type, 'story') && eq(embeddings.externalId, id));
 };

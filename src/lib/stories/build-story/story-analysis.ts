@@ -14,7 +14,8 @@ import { generateObject } from 'ai';
 import { getStoryObjectSchema } from './schemas';
 import { getSystemMessage, getUserMessage } from './prompts/story-object';
 import { log } from '../../helpers';
-import { processStoryEdits } from './edits';
+import { processStories } from './edits';
+import { LimitedStory } from './populate-story-data';
 
 export async function generateStory(
   combinedContent: {
@@ -25,7 +26,7 @@ export async function generateStory(
   grant: { description: string },
   parentGrant: { description: string },
   job: Job
-) {
+): Promise<LimitedStory[]> {
   const generationChain = storyGenerationPrompt
     .pipe(anthropicModelWithFallback)
     .pipe(new StringOutputParser());
@@ -67,11 +68,7 @@ export async function generateStory(
     [anthropicModel, openAIModel, googleAiStudioModel]
   );
 
-  object.stories = await processStoryEdits(
-    existingStories,
-    object.stories,
-    job
-  );
+  const newStories = await processStories(existingStories, object.stories, job);
 
-  return object;
+  return newStories;
 }

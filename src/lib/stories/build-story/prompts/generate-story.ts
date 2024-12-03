@@ -122,6 +122,7 @@ export const constructStoryUserMessage: HumanMessagePromptTemplate =
   - Do not use terms like web or web3 or nft or crypto or web culture or blockchain.
   - Stories should highlight impact fitting both grant deliverables and parent flow
   - Do not add infoNeededToComplete if the story is complete.
+  - Do not under any circumstances change the title or tagline of an existing story.
   
   If you can't create any good, impactful stories related to the grant, it's acceptable to return an empty response.
   

@@ -8,7 +8,7 @@ import { CastForStory } from '../../../database/queries/casts/casts-for-story';
 
 export type LimitedStory = Omit<
   StoryAnalysis,
-  'mediaUrls' | 'headerImage' | 'createdAt' | 'participants' | 'id'
+  'mediaUrls' | 'headerImage' | 'createdAt' | 'id'
 > & { id?: string };
 
 export async function populateGeneratedStories(
@@ -29,12 +29,15 @@ export async function populateGeneratedStories(
   );
   return stories.map((story, index) => {
     const earliestTimestamp = getEarliestTimestamp(story.castHashes, casts);
+    const participants = Array.from(
+      new Set([...story.participants, ...builderAddresses])
+    );
 
     return {
       ...story,
       author: DR_GONZO_ADDRESS,
       headerImage: headerImages[index] || '',
-      participants: builderAddresses,
+      participants,
       id: story.id || '',
       mediaUrls: mediaUrls[index] || [],
       complete: headerImages[index] ? story.complete : false,

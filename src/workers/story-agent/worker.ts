@@ -8,12 +8,12 @@ import { eq } from 'drizzle-orm';
 import { getAllCastsForStories } from '../../database/queries/casts/casts-for-story';
 import { flowsDb } from '../../database/flowsDb';
 import { stories } from '../../database/flows-schema';
-import { inArray, InferInsertModel, sql } from 'drizzle-orm';
-import { getFarcasterProfile } from '../../database/queries/profiles/get-profile';
+import { InferInsertModel, sql } from 'drizzle-orm';
 import { getGrantStories } from '../../database/queries/stories/get-grant-stories';
 import { farcasterDb } from '../../database/farcasterDb';
 import { farcasterCasts } from '../../database/farcaster-schema';
 import { getCastHash } from '../../lib/casts/utils';
+import { cleanTextForEmbedding } from '../../lib/embedding/utils';
 
 const STORY_LOCK_PREFIX = 'story-locked-v1:';
 const LOCK_TTL = 4 * 60 * 60 * 1000; // 4 hours in milliseconds
@@ -33,7 +33,7 @@ export const storyAgentWorker = async (
     queueName,
     async (job: Job<StoryJobBody[]>) => {
       const storiesJobData = job.data;
-      const embeddingJobs: StoryJobBody[] = [];
+      const embeddingJobs: JobBody[] = [];
 
       if (!storiesJobData || !storiesJobData.length) {
         throw new Error('Story data is required');
@@ -220,25 +220,20 @@ export const storyAgentWorker = async (
               job
             );
 
-            // // Add to embedding jobs queue
-            // analysis.forEach((storyAnalysis) => {
-            //   embeddingJobs.push({
-            //     type: 'story',
-            //     content: cleanTextForEmbedding(storyAnalysis.summary),
-            //     rawContent: storyAnalysis.summary,
-            //     externalId: story.newCastId.toString(),
-            //     groups: [],
-            //     users: [],
-            //     externalUrl: `https://warpcast.com/~/conversations/${casts[0].hash}`,
-            //     tags: [],
-            //     title: storyAnalysis.title,
-            //     keyPoints: storyAnalysis.keyPoints,
-            //     participants: storyAnalysis.participants,
-            //     timeline: storyAnalysis.timeline,
-            //     sentiment: storyAnalysis.sentiment,
-            //     confidence: storyAnalysis.confidence
-            //   });
-            // });
+            // Add to embedding jobs queue
+            analysis.forEach((storyAnalysis) => {
+              embeddingJobs.push({
+                type: 'story',
+                content: cleanTextForEmbedding(storyAnalysis.summary),
+                rawContent: storyAnalysis.summary,
+                externalId: storyAnalysis.id,
+                groups: [],
+                users: storyAnalysis.participants,
+                externalUrl: `https://flows.wtf/story/${storyAnalysis.id}`,
+                tags: [],
+                urls: storyAnalysis.mediaUrls,
+              });
+            });
 
             log(`Added story analysis to embedding queue`, job);
 
@@ -258,17 +253,17 @@ export const storyAgentWorker = async (
 
         const queueJobName = `embed-story-${Date.now()}`;
 
-        // const queueJob = await bulkEmbeddingsQueue.add(
-        //   queueJobName,
-        //   embeddingJobs
-        // );
+        const queueJob = await bulkEmbeddingsQueue.add(
+          queueJobName,
+          embeddingJobs
+        );
 
         log(`Added ${embeddingJobs.length} embedding jobs to queue`, job);
 
         return {
           jobId: job.id,
-          //   results,
-          //   queueJobId: queueJob.id,
+          results,
+          queueJobId: queueJob.id,
         };
       } catch (error) {
         console.error('Error processing stories:', error);
