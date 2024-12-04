@@ -4,6 +4,7 @@ import { describeImage } from '../../multi-media/image/describe-image';
 import { getTokenMetadataForUrl } from '../../../database/queries/token-metadata/get-token-metadata-for-url';
 import { pinByHash } from '../../multi-media/pinata/pin-file';
 import { pullYoutubeThumbnail } from '../../multi-media/youtube/download';
+import { extractDiverseThumbnail } from '../../multi-media/video/get-thumbnail';
 
 export interface MediaInfo {
   url: string;
@@ -21,6 +22,10 @@ export const isImageUrl = (url: string) => {
       url.includes('imagedelivery.net')) &&
     !url.includes('.m3u8')
   );
+};
+
+const isVideoUrl = (url: string) => {
+  return url.includes('.m3u8');
 };
 
 export const getEmbedDescription = (
@@ -44,6 +49,17 @@ export const processImageUrl = async (
     description = await describeImage(url, redisClient, job);
   }
   return { url, description };
+};
+
+export const processVideoUrlForThumbnail = async (
+  url: string,
+  redisClient: RedisClientType,
+  job: Job
+) => {
+  const thumbnailUrl = await extractDiverseThumbnail(url, '/tmp', job);
+  if (!thumbnailUrl) return null;
+  const description = await describeImage(thumbnailUrl, redisClient, job);
+  return { url: thumbnailUrl, description };
 };
 
 export const getYoutubeThumbnail = async (
@@ -127,7 +143,11 @@ export const processEmbed = async (
       return await processImageUrl(url, redisClient, job, embedSummaries);
     } else if (url.includes('zora.co') && !isUrlInArray(url, existingUrls)) {
       return await processZoraUrl(url, redisClient, job);
-    } else if (url.includes('m3u8') && !imageOnly) {
+    } else if (url.includes('m3u8')) {
+      // If we're only processing images, skip videos
+      if (imageOnly)
+        return await processVideoUrlForThumbnail(url, redisClient, job);
+
       return { url, description: null };
     } else if (isYoutubeUrl(url) && !isUrlInArray(url, existingUrls)) {
       return await getYoutubeThumbnail(url, job, redisClient);

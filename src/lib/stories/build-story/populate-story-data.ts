@@ -33,6 +33,15 @@ export async function populateGeneratedStories(
       new Set([...story.participants, ...builderAddresses])
     );
 
+    // if header image is now available, and story is not complete due to missing header image, set complete to true
+    const complete =
+      !story.complete &&
+      headerImages[index] &&
+      story.headerImage === '' &&
+      story.infoNeededToComplete === 'No header image available'
+        ? true
+        : story.complete;
+
     return {
       ...story,
       author: DR_GONZO_ADDRESS,
@@ -40,7 +49,7 @@ export async function populateGeneratedStories(
       participants,
       id: story.id || '',
       mediaUrls: mediaUrls[index] || [],
-      complete: headerImages[index] ? story.complete : false,
+      complete,
       infoNeededToComplete: headerImages[index]
         ? story.infoNeededToComplete
         : story.infoNeededToComplete || 'No header image available',

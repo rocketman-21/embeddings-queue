@@ -12,6 +12,7 @@ import {
   isImageUrl,
   processEmbed,
   processImageUrl,
+  processVideoUrlForThumbnail,
   processZoraUrl,
 } from '../utils/media-utils';
 import { selectBestImage } from './select-best-image';
@@ -74,6 +75,9 @@ export async function getHeaderImage(
         !isUrlInArray(url, imageUrls)
       ) {
         const result = await processImageUrl(url, redisClient, job);
+        if (result) imageUrls.push(result);
+      } else if (url.includes('m3u8') && !isUrlInArray(url, imageUrls)) {
+        const result = await processVideoUrlForThumbnail(url, redisClient, job);
         if (result) imageUrls.push(result);
       }
     }

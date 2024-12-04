@@ -32,7 +32,7 @@
     "trailingComma": "es5"
   },
   "engines": {
-    "node": ">=12"
+    "node": ">=18"
   },
   "devDependencies": {
     "@tsconfig/recommended": "^1.0.1",
@@ -55,6 +55,8 @@
     "@langchain/anthropic": "^0.3.8",
     "@langchain/core": "^0.3.19",
     "@langchain/openai": "^0.3.14",
+    "@tensorflow-models/face-detection": "^1.0.3",
+    "@tensorflow/tfjs": "^4.22.0",
     "@wagmi/cli": "^2.1.18",
     "ai": "^3.4.33",
     "axios": "^1.7.7",
