@@ -36,11 +36,12 @@ export async function populateGeneratedStories(
     // if header image is now available, and story is not complete due to missing header image, set complete to true
     const complete =
       !story.complete &&
-      headerImages[index] &&
+      headerImages[index] !== null &&
       story.headerImage === '' &&
-      story.infoNeededToComplete === 'No header image available'
+      story.infoNeededToComplete === 'No header image available' &&
+      story.complete !== undefined // ensure story.complete exists before checking
         ? true
-        : story.complete;
+        : story.complete || false; // default to false if story.complete is undefined
 
     return {
       ...story,
