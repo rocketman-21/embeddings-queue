@@ -65,7 +65,7 @@ function isComplete(
     headerImage &&
     headerImage !== '' &&
     (!infoNeededToComplete || infoNeededToComplete === '') &&
-    story.completeness > 0.85
+    story.completeness >= 0.8
   ) {
     return true;
   }
