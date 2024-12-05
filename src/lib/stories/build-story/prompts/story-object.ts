@@ -32,6 +32,7 @@ export function getStoryObjectMessage(
     - However, try not to remove any information from an edited section, but instead add to it.
     - Add the newSources to the story's sources
     - Add the newCastHashes to the story's castHashes
+    - Update the completenessScore of the story with the new completenessScore
     
     Otherwise, return any new stories using the schema provided.
     Do not paraphrase or alter any content. Do not ever change the title or tagline of an existing story.
