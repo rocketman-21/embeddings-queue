@@ -37,7 +37,7 @@ export async function extractDiverseThumbnail(
       log(`Video duration: ${duration} seconds`, job);
 
       // Generate timestamps including start and end of video
-      const numFrames = 50;
+      const numFrames = 25;
       const timestamps = Array.from(
         { length: numFrames },
         (_, i) => Math.min(duration - 0.1, (duration * i) / (numFrames - 1)) // Subtract a small epsilon to stay within bounds
