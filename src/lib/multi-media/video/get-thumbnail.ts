@@ -32,14 +32,15 @@ export async function extractDiverseThumbnail(
       // Get video metadata
       log('Getting video metadata...', job);
       const metadata = await getVideoMetadata(videoUrl);
-      const duration = metadata.format?.duration;
+      const duration = metadata.format?.duration || 0;
       if (!duration) throw new Error('Could not determine video duration');
       log(`Video duration: ${duration} seconds`, job);
 
       // Generate timestamps including start and end of video
+      const numFrames = 50;
       const timestamps = Array.from(
-        { length: 50 },
-        (_, i) => duration * (i / 49) // Evenly space frames from 0 to duration
+        { length: numFrames },
+        (_, i) => Math.min(duration - 0.1, (duration * i) / (numFrames - 1)) // Subtract a small epsilon to stay within bounds
       );
       log(
         `Generated ${timestamps.length} timestamps for frame extraction`,
@@ -51,18 +52,38 @@ export async function extractDiverseThumbnail(
       const framePaths: string[] = [];
       for (let i = 0; i < timestamps.length; i += 5) {
         const batchTimestamps = timestamps.slice(i, i + 5);
-        const batchPromises = batchTimestamps.map((timestamp, batchIndex) => {
-          const frameIndex = i + batchIndex;
-          const outputPath = path.join(outputDir, `frame_${frameIndex}.jpg`);
-          log(
-            `Extracting frame ${frameIndex + 1}/50 at timestamp ${timestamp.toFixed(2)}s`,
-            job
-          );
-          return extractFrame(videoUrl, timestamp, outputPath, job);
-        });
+        const batchPromises = batchTimestamps.map(
+          async (timestamp, batchIndex) => {
+            const frameIndex = i + batchIndex;
+            const outputPath = path.join(outputDir, `frame_${frameIndex}.jpg`);
+
+            // Safety check: Ensure timestamp is within video duration
+            if (timestamp >= duration) {
+              log(
+                `Timestamp ${timestamp.toFixed(2)}s exceeds video duration. Skipping frame ${frameIndex + 1}.`,
+                job
+              );
+              return null;
+            }
+
+            log(
+              `Extracting frame ${frameIndex + 1}/${numFrames} at timestamp ${timestamp.toFixed(2)}s`,
+              job
+            );
+            try {
+              return await extractFrame(videoUrl, timestamp, outputPath, job);
+            } catch (error: any) {
+              log(
+                `Failed to extract frame ${frameIndex + 1} at ${timestamp.toFixed(2)}s: ${error.message}`,
+                job
+              );
+              return null;
+            }
+          }
+        );
 
         const batchFramePaths = await Promise.all(batchPromises);
-        framePaths.push(...batchFramePaths);
+        framePaths.push(...(batchFramePaths.filter(Boolean) as string[]));
       }
 
       log(`Successfully extracted ${framePaths.length} frames`, job);
