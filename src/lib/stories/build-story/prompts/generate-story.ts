@@ -117,6 +117,7 @@ export function getGenerateStoryMessage(
       "timestamp": "YYYY-MM-DDTHH:mm:ss.sssZ",
       "event": "Description of new event"
     ],
+    "completenessScore": 0.0 to 1.0, [Updated completeness score for the story]
     "newSources": ["Array of new source URLs to add"],
     "editedContent": "Text to append or edit in the story summary and what section of the story summary the new information should be added in, and whether the content for that section should be added, replaced, or removed", 
     "newCastHashes": ["Array of new cast hashes to add"]
