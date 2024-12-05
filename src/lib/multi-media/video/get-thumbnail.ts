@@ -5,12 +5,18 @@ import { pinFile } from '../pinata/pin-file';
 import { createHash } from 'crypto';
 import { log } from '../../helpers';
 import * as tf from '@tensorflow/tfjs';
+import sharp from 'sharp';
 import {
   analyzeFrame,
   extractFrame,
   getVideoMetadata,
   initFaceDetector,
 } from './thumbnail-utils';
+
+interface FrameStats {
+  path: string;
+  score: number;
+}
 
 /**
  * Downloads multiple frames from a video and selects the most visually diverse one
@@ -24,113 +30,161 @@ export async function extractDiverseThumbnail(
   outputDir: string,
   job: Job
 ): Promise<string> {
-  return new Promise(async (resolve, reject) => {
+  let framePaths: string[] = [];
+
+  try {
+    // Try WebGL first, fallback to CPU
     try {
+      await tf.setBackend('webgl');
+      log('Using WebGL backend', job);
+    } catch (err) {
+      log(`WebGL initialization failed: ${err}. Falling back to CPU`, job);
       await tf.setBackend('cpu');
-      log(`Starting thumbnail extraction for video: ${videoUrl}`, job);
+      log('Using CPU backend', job);
+    }
+    log(`Starting thumbnail extraction for video: ${videoUrl}`, job);
 
-      // Get video metadata
-      log('Getting video metadata...', job);
-      const metadata = await getVideoMetadata(videoUrl);
-      const duration = metadata.format?.duration || 0;
-      if (!duration) throw new Error('Could not determine video duration');
-      log(`Video duration: ${duration} seconds`, job);
+    // Get video metadata
+    log('Getting video metadata...', job);
+    const metadata = await getVideoMetadata(videoUrl);
+    const duration = metadata.format?.duration || 0;
+    if (!duration)
+      throw new Error('Could not determine video duration from metadata');
+    log(`Video duration: ${duration} seconds`, job);
 
-      // Generate timestamps including start and end of video
-      const numFrames = 25;
-      const timestamps = Array.from(
-        { length: numFrames },
-        (_, i) => Math.min(duration - 0.1, (duration * i) / (numFrames - 1)) // Subtract a small epsilon to stay within bounds
+    // Determine number of frames based on duration
+    const numFrames = Math.max(
+      2,
+      duration > 60 ? 10 : Math.min(25, Math.ceil(duration))
+    );
+
+    // Generate timestamps with special handling for very short videos
+    let timestamps: number[];
+    if (numFrames === 2) {
+      timestamps = [0.1, Math.max(0.2, duration - 0.1)];
+    } else {
+      timestamps = Array.from({ length: numFrames }, (_, i) =>
+        Math.min(duration - 0.1, 0.1 + ((duration - 0.2) * i) / (numFrames - 1))
       );
-      log(
-        `Generated ${timestamps.length} timestamps for frame extraction`,
-        job
+    }
+    log(
+      `Generated ${timestamps.length} timestamps for frame extraction: ${timestamps.join(', ')}`,
+      job
+    );
+
+    // Initialize face detector once
+    const detector = await initFaceDetector(job);
+    if (!detector)
+      throw new Error(
+        'Failed to initialize face detector - check model availability'
       );
 
-      // Extract frames in batches of 5
-      log('Extracting frames in batches of 5...', job);
-      const framePaths: string[] = [];
-      for (let i = 0; i < timestamps.length; i += 5) {
-        const batchTimestamps = timestamps.slice(i, i + 5);
-        const batchPromises = batchTimestamps.map(
-          async (timestamp, batchIndex) => {
-            const frameIndex = i + batchIndex;
-            const outputPath = path.join(outputDir, `frame_${frameIndex}.jpg`);
+    // Extract and analyze frames
+    const frameStats: FrameStats[] = [];
+    const batchSize = 2;
 
-            // Safety check: Ensure timestamp is within video duration
-            if (timestamp >= duration) {
-              log(
-                `Timestamp ${timestamp.toFixed(2)}s exceeds video duration. Skipping frame ${frameIndex + 1}.`,
-                job
-              );
-              return null;
-            }
+    for (let i = 0; i < timestamps.length; i += batchSize) {
+      const batchTimestamps = timestamps.slice(i, i + batchSize);
+      await Promise.all(
+        batchTimestamps.map(async (timestamp, batchIndex) => {
+          const frameIndex = i + batchIndex;
+          const outputPath = path.join(outputDir, `frame_${frameIndex}.jpg`);
 
+          if (timestamp >= duration) {
             log(
-              `Extracting frame ${frameIndex + 1}/${numFrames} at timestamp ${timestamp.toFixed(2)}s`,
+              `Timestamp ${timestamp.toFixed(2)}s exceeds duration ${duration}s. Skipping.`,
               job
             );
-            try {
-              return await extractFrame(videoUrl, timestamp, outputPath, job);
-            } catch (error: any) {
-              log(
-                `Failed to extract frame ${frameIndex + 1} at ${timestamp.toFixed(2)}s: ${error.message}`,
-                job
-              );
+            return null;
+          }
+
+          try {
+            // Extract frame
+            const framePath = await extractFrame(
+              videoUrl,
+              timestamp,
+              outputPath,
+              job
+            );
+            if (!framePath) {
+              log(`Frame extraction failed at timestamp ${timestamp}s`, job);
               return null;
             }
+
+            // Read and resize frame before analysis
+            const imageBuffer = await fs.promises.readFile(framePath);
+            const resizedBuffer = await sharp(imageBuffer)
+              .resize({ width: 320 })
+              .jpeg({ quality: 80 })
+              .toBuffer();
+
+            // Write resized buffer back
+            await fs.promises.writeFile(framePath, resizedBuffer);
+
+            // Analyze frame
+            const stats = await analyzeFrame(framePath, detector, job);
+            if (stats) {
+              frameStats.push(stats);
+              framePaths.push(framePath);
+              log(`Frame analysis successful - score: ${stats.score}`, job);
+            } else {
+              log(
+                `Frame analysis returned no stats for timestamp ${timestamp}s`,
+                job
+              );
+            }
+            return framePath;
+          } catch (error: any) {
+            log(
+              `Failed to process frame ${frameIndex + 1} at ${timestamp}s: ${error.message}`,
+              job
+            );
+            return null;
           }
-        );
-
-        const batchFramePaths = await Promise.all(batchPromises);
-        framePaths.push(...(batchFramePaths.filter(Boolean) as string[]));
-      }
-
-      log(`Successfully extracted ${framePaths.length} frames`, job);
-
-      // Analyze frames
-      log(
-        'Analyzing frames for visual diversity, quality and face detection...',
-        job
+        })
       );
-      const detector = await initFaceDetector(job);
-      const frameStats = await Promise.all(
-        framePaths.map((framePath) => analyzeFrame(framePath, detector, job))
-      );
-
-      // Select best frame
-      const selectedFrame = frameStats.reduce((prev, curr) =>
-        curr && curr.score > (prev?.score || 0) ? curr : prev
-      );
-
-      if (!selectedFrame) throw new Error('No valid frames found');
-
-      log(
-        `Selected best frame with variance score: ${selectedFrame.score}`,
-        job
-      );
-
-      // Process selected frame
-      log('Reading selected frame into buffer...', job);
-      const imageBuffer = await fs.promises.readFile(selectedFrame.path);
-      const hash = createHash('sha256').update(imageBuffer).digest('hex');
-      const name = `video-thumbnail-${hash}`;
-
-      // Upload to IPFS
-      log('Pinning thumbnail to IPFS...', job);
-      const pinnedUrl = await pinFile(imageBuffer, name, job);
-      if (!pinnedUrl) throw new Error('Failed to pin thumbnail to IPFS');
-      log(`Successfully pinned thumbnail to IPFS: ${pinnedUrl}`, job);
-
-      // Cleanup
-      log('Cleaning up temporary frame files...', job);
-      //   await Promise.all(framePaths.map((path) => fs.promises.unlink(path)));
-      log('Cleanup complete', job);
-
-      resolve(pinnedUrl);
-    } catch (err) {
-      log('Error extracting diverse thumbnail: ' + err, job);
-      reject(err);
     }
-  });
+
+    if (frameStats.length === 0)
+      throw new Error('No valid frames found after processing all timestamps');
+
+    // Select best frame
+    const selectedFrame = frameStats.reduce((prev, curr) =>
+      curr && curr.score > (prev?.score || 0) ? curr : prev
+    );
+
+    log(
+      `Selected best frame with variance score: ${selectedFrame.score} from ${frameStats.length} valid frames`,
+      job
+    );
+
+    // Process selected frame
+    const imageBuffer = await fs.promises.readFile(selectedFrame.path);
+    const hash = createHash('sha256').update(imageBuffer).digest('hex');
+    const name = `video-thumbnail-${hash}`;
+
+    // Upload to IPFS
+    log('Pinning thumbnail to IPFS...', job);
+    try {
+      const pinnedUrl = await pinFile(imageBuffer, name, job);
+      if (!pinnedUrl) throw new Error('IPFS pinning returned empty URL');
+      log(`Successfully pinned thumbnail to IPFS: ${pinnedUrl}`, job);
+      return pinnedUrl;
+    } catch (error: any) {
+      throw new Error(`Failed to pin thumbnail to IPFS: ${error.message}`);
+    }
+  } catch (err) {
+    const errorMessage = err instanceof Error ? err.message : String(err);
+    log(`Error extracting diverse thumbnail: ${errorMessage}`, job);
+    throw err;
+  } finally {
+    // Cleanup temporary files
+    await Promise.all(
+      framePaths.map((path) =>
+        fs.promises.unlink(path).catch((err) => {
+          log(`Failed to cleanup temporary file ${path}: ${err}`, job);
+        })
+      )
+    );
+  }
 }
