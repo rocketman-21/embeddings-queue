@@ -47,3 +47,11 @@ export const getFarcasterProfilesByFnames = async (fnames: string[]) => {
     .where(inArray(farcasterProfiles.fname, fnames));
   return profiles;
 };
+
+export const getFarcasterProfilesByFids = async (fids: number[]) => {
+  const profiles = await farcasterDb
+    .select()
+    .from(farcasterProfiles)
+    .where(inArray(farcasterProfiles.fid, fids));
+  return profiles;
+};

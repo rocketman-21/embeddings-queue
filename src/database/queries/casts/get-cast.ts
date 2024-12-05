@@ -17,6 +17,8 @@ export const getCast = async (castHash: Buffer) => {
       text: farcasterCasts.text,
       computedTags: farcasterCasts.computedTags,
       storyIds: farcasterCasts.storyIds,
+      mentionsPositionsArray: farcasterCasts.mentionsPositionsArray,
+      mentionedFids: farcasterCasts.mentionedFids,
       profile: {
         fid: farcasterProfiles.fid,
         fname: farcasterProfiles.fname,

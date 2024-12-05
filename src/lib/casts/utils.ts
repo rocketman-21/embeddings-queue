@@ -68,26 +68,51 @@ export async function generateCastText(
     );
   }
 
-  const contentText = cast.text ? `CONTENT: ${cast.text}` : '';
-  const castUrl = generateCastUrl(cast.profile?.fname ?? undefined, cast.hash);
+  if (!cast.timestamp) {
+    throw new Error('Cast timestamp is required');
+  }
+
+  const mainSection = formatCastMainDescription(
+    cast.timestamp,
+    cast.text,
+    cast.profile?.fname ?? '',
+    cast.hash,
+    embedSummaries,
+    embedUrls
+  );
+  const parentCastSection = formatParentCastSection(
+    cast.parentCast,
+    parentEmbedSummaries
+  );
+
+  return `${mainSection}
+${parentCastSection}
+---`;
+}
+
+export function formatCastMainDescription(
+  timestamp: Date,
+  text: string | null,
+  fname: string,
+  hash: Buffer | null,
+  embedSummaries: string[],
+  embedUrls: string[]
+): string {
+  const contentText = text ? `CONTENT: ${text}` : '';
+  const castUrl = generateCastUrl(fname, hash);
   const attachments = embedSummaries.length
     ? `ATTACHMENTS: ${embedSummaries.join(' | ')}`
     : '';
   const attachmentUrls = embedUrls.length
     ? `ATTACHMENT_URLS: ${embedUrls.join(' | ')}`
     : '';
-  const parentCastSection = formatParentCastSection(
-    cast.parentCast,
-    parentEmbedSummaries
-  );
 
-  return `TIMESTAMP: ${new Date(cast.timestamp).toISOString()}
+  return `CAST_AUTHOR: ${fname}
+TIMESTAMP: ${new Date(timestamp).toISOString()}
 ${contentText}
 CAST_URL: ${castUrl}
 ${attachments}
-${attachmentUrls}
-${parentCastSection}
----`;
+${attachmentUrls}`;
 }
 
 function formatRepliesSection(

@@ -1,7 +1,7 @@
 import { Worker, Job, RedisOptions, ClusterOptions, Queue } from 'bullmq';
 import { IsGrantUpdateJobBody, StoryJobBody } from '../../types/job';
 import { log } from '../../lib/helpers';
-import { analyzeCast } from '../../lib/casts/analyze-cast';
+import { analyzeCast } from '../../lib/casts/analysis/analyze';
 import { RedisClientType } from 'redis';
 import { farcasterCasts } from '../../database/farcaster-schema';
 import { farcasterDb } from '../../database/farcasterDb';
@@ -29,14 +29,14 @@ export const isGrantUpdateWorker = async (
       try {
         const results = [];
         for (let i = 0; i < casts.length; i++) {
-          const cast = casts[i];
-          const result = await analyzeCast(redisClient, cast, job);
+          const jobData = casts[i];
+          const result = await analyzeCast(redisClient, jobData, job);
 
           const grantId = result.grantId;
 
           if (result.isGrantUpdate && grantId) {
             // Convert the hexadecimal hash string to a Buffer
-            const castHash = getCastHash(cast.castHash);
+            const castHash = getCastHash(jobData.castHash);
 
             const updated = await farcasterDb
               .update(farcasterCasts)

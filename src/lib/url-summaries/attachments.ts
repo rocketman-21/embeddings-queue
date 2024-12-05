@@ -6,9 +6,10 @@ import { safeTrim } from '../builders/utils';
 import { farcasterDb } from '../../database/farcasterDb';
 import { FarcasterCast, farcasterCasts } from '../../database/farcaster-schema';
 import { log } from '../helpers';
-import { eq, sql } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 import { describeZora } from '../multi-media/zora/describe-zora';
 import { describeYoutubeVideo } from '../multi-media/youtube/describe';
+import { describeCast } from '../casts/describe-cast';
 
 // Get URL summaries from a list of URLs
 export const fetchUrlSummaries = async (
@@ -16,48 +17,38 @@ export const fetchUrlSummaries = async (
   job: Job,
   urls?: string[]
 ): Promise<string[]> => {
-  const summaries: string[] = [];
-  let type: 'image' | 'video' | null = null;
+  if (!urls?.length) return [];
 
-  if (urls && urls.length > 0) {
-    // Process each URL
-    for (const url of urls) {
-      if (!url) continue;
+  const summaries = await Promise.all(
+    urls.map(async (url) => {
+      if (!url) return null;
 
-      // Determine type and collect URLs
-      if (url.includes('m3u8')) {
-        type = 'video';
-      } else {
-        type = 'image';
-      }
+      let summary: string | null = null;
 
-      if (url.includes('zora.co')) {
-        const summary = await describeZora(url, redisClient, job);
-        log(`Zora summary: ${summary}`, job);
-        if (summary) {
-          summaries.push(summary);
-        }
+      if (url.includes('warpcast.com')) {
+        summary = await describeCast(url, redisClient, job);
+        summary = `Quoted post: ${summary}`;
+      } else if (url.includes('zora.co')) {
+        summary = await describeZora(url, redisClient, job);
+        summary = `Zora mint: ${summary}`;
       } else if (url.includes('youtube.com') || url.includes('youtu.be')) {
-        const summary = await describeYoutubeVideo(url, redisClient, job);
-        if (summary) {
-          summaries.push(summary);
-        }
-      } else if (type === 'image') {
-        const summary = await describeImage(url, redisClient, job);
-        // Only add non-empty summaries that aren't just empty quotes
-        if (summary && safeTrim(summary) !== '""' && safeTrim(summary) !== '') {
-          summaries.push(summary);
-        }
-      } else if (type === 'video') {
-        const summary = await describeVideo(url, redisClient, job);
-        if (summary) {
-          summaries.push(summary);
+        summary = await describeYoutubeVideo(url, redisClient, job);
+        summary = `Youtube video: ${summary}`;
+      } else if (url.includes('m3u8')) {
+        summary = await describeVideo(url, redisClient, job);
+        summary = `Attached video: ${summary}`;
+      } else {
+        summary = await describeImage(url, redisClient, job);
+        if (summary && safeTrim(summary) === '""') {
+          summary = null;
         }
       }
-    }
-  }
 
-  return summaries;
+      return summary;
+    })
+  );
+
+  return summaries.filter((s): s is string => !!s && safeTrim(s) !== '');
 };
 
 export async function getAndSaveUrlSummaries(
