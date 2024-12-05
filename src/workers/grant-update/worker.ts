@@ -99,7 +99,7 @@ export const isGrantUpdateWorker = async (
 
         let storyQueueJob;
         if (storyJobs.length > 0) {
-          // storyQueueJob = await storyAgentQueue.add(queueJobName, storyJobs);
+          storyQueueJob = await storyAgentQueue.add(queueJobName, storyJobs);
         }
 
         log(`Added ${storyJobs.length} story jobs to queue`, job);
