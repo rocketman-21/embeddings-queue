@@ -42,27 +42,29 @@ export function getGenerateStoryMessage(
   1. Analyze the information:
   Break down the information inside <story_planning> tags. Consider the following:
   a. Summarize key themes from the grant description
-  b. List and categorize relevant information from casts
-  c. Identify potential story angles and their supporting evidence
+  b. List and categorize relevant information from casts 
+  c. Identify potential story angles and their supporting evidence. Try to keep each story focused on a single event or impact.
   d. Evaluate completeness of information for each potential story, and set the completenessScore field
-  e. Check for any quotes that can be included
-  f. Group related posts into coherent narratives and identify major themes
-  g. Consider chronological order and relationships between posts
-  h. Extract key information and quotes directly from cast text
-  i. If you can't find any information related to the grant, it's acceptable to return an empty response.
-  j. Only add images from casts that are relevant to the story and fit the location, event, or impact.
-  k. Only add casts that are relevant to the story and fit the location, event, or impact.
-  l. Feel free to add links to external sources in the sources array if relevant.
-  m. Any casts or external URLs should go in the sources array.
-  n. If the story is particularly exciting or impactful with lots of details, feel free to make it longer than a few paragraphs.
-  o. If there are a lot of fun exciting details or quotes, feel free to make the paragraphs much more detailed.
-  p. If an existing story already exists for a given topic, impact, or event, don't create a new story. Use the existing story, and add updates to it. Do not change the title or tagline of an existing story if you are updating it.
-  q. However, if the existing story is incomplete, you should add more context to it if you can.
-  r. Do not forget to return the completeness fields.
-  s. Be sure to mention builder names and be specific about the action and impact happening.
-  t. Plan out any edits that need to be made to the story before you write it. Don't feel like you have to make edits though, unless there is new information that needs to be added.
-  u. Only make edits if there is new information that needs to be added. Do not duplicate or otherwise paraphrase existing information in the story with your edits, incoroprate the new information naturally into the existing story structure.
-  w. Do make edits based on sources or casts that are already included in the story.
+  e. Group related posts into coherent narratives and identify major themes
+  f. Consider chronological order and relationships between posts
+  g. Extract key information and quotes directly from cast text
+  h. Check for any quotes that can be included
+  i. Plan out any edits that need to be made to the story before you write it. Don't feel like you have to make edits though, unless there is new information that needs to be added.
+  j. Only make edits if there is new information that needs to be added. Do not duplicate or otherwise paraphrase existing information in the story with your edits, incoroprate the new information naturally into the existing story structure.
+  k. Do not make edits based on sources or casts that are already included in the story.
+  l. If you can reference people or quotes as it relates to the narrative, do so.
+  m. If you can't find any information related to the grant, it's acceptable to return an empty response.
+  n. Only add images from casts that are relevant to the story and fit the location, event, or impact.
+  o. Only add casts that are relevant to the story and fit the location, event, or impact.
+  p. Feel free to add links to external sources in the sources array if relevant.
+  q. Any casts or external URLs should go in the sources array.
+  r. If the story is particularly exciting or impactful with lots of details, feel free to make it longer than a few paragraphs.
+  s. If there are a lot of fun exciting details or quotes, feel free to make the paragraphs much more detailed.
+  t. If an existing story already exists for a given topic, impact, or event, don't create a new story. Use the existing story, and add updates to it. Do not change the title or tagline of an existing story if you are updating it.
+  u. However, if the existing story is incomplete, you should add more context to it if you can.
+  v. Do not forget to return the completeness fields.
+  w. Be sure to mention builder names and be specific about the action and impact happening.
+  x. If you can add images via markdown format to the story, do so in the appropriate section.
   
   2. Create the story:
   Based on your analysis, construct a story using the following structure:

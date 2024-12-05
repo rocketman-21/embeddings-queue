@@ -25,8 +25,6 @@ async function buildStory(
     throw new Error('Stories data is required');
   }
 
-  log('Preparing cast data', job);
-
   const combinedContent = await prepareCastData(casts, redisClient, job);
 
   log('Generating stories', job);

@@ -35,6 +35,16 @@ export function getStoryObjectMessage(
     
     Otherwise, return any new stories using the schema provided.
     Do not paraphrase or alter any content. Do not ever change the title or tagline of an existing story.
-    Return the stories in valid JSON format.
+    Return the stories as an array of objects in valid JSON format, not as a string.
+    Example format:
+    {
+      "stories": [
+        {
+          "title": "Story Title",
+          "summary": "Story summary...",
+          ...
+        }
+      ]
+    }
   `;
 }
