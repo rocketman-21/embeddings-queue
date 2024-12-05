@@ -65,6 +65,7 @@ export function getGenerateStoryMessage(
   v. Do not forget to return the completeness fields.
   w. Be sure to mention builder names and be specific about the action and impact happening.
   x. If you can add images via markdown format to the story, do so in the appropriate section.
+  y. If an existing story has > 10 sources already, prefer adding a new story about the new impact instead of updating the existing one.
   
   2. Create the story:
   Based on your analysis, construct a story using the following structure:
