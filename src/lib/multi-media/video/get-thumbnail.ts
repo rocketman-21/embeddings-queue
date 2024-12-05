@@ -55,7 +55,7 @@ export async function extractDiverseThumbnail(
     // Determine number of frames based on duration
     const numFrames = Math.max(
       2,
-      duration > 60 ? 10 : Math.min(25, Math.ceil(duration))
+      duration > 60 ? 20 : Math.min(25, Math.ceil(duration))
     );
 
     // Generate timestamps with special handling for very short videos
