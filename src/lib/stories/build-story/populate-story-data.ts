@@ -8,7 +8,7 @@ import { CastForStory } from '../../../database/queries/casts/casts-for-story';
 
 export type LimitedStory = Omit<
   StoryAnalysis,
-  'mediaUrls' | 'createdAt' | 'id'
+  'mediaUrls' | 'createdAt' | 'id' | 'complete'
 > & { id?: string };
 
 export async function populateGeneratedStories(
@@ -27,21 +27,18 @@ export async function populateGeneratedStories(
       getHeaderImage(story, mediaUrls[index] || [], job, redisClient)
     )
   );
+
   return stories.map((story, index) => {
     const earliestTimestamp = getEarliestTimestamp(story.castHashes, casts);
     const participants = Array.from(
       new Set([...story.participants, ...builderAddresses])
     );
 
-    // if header image is now available, and story is not complete due to missing header image, set complete to true
-    const complete =
-      !story.complete &&
-      headerImages[index] !== null &&
-      story.headerImage === '' &&
-      story.infoNeededToComplete === 'No header image available' &&
-      story.complete !== undefined // ensure story.complete exists before checking
-        ? true
-        : story.complete || false; // default to false if story.complete is undefined
+    const complete = isComplete(
+      story,
+      headerImages[index],
+      story.infoNeededToComplete
+    );
 
     return {
       ...story,
@@ -57,6 +54,23 @@ export async function populateGeneratedStories(
       createdAt: earliestTimestamp.toISOString(),
     };
   });
+}
+
+function isComplete(
+  story: LimitedStory,
+  headerImage: string | null,
+  infoNeededToComplete: string | undefined
+): boolean {
+  if (
+    headerImage &&
+    headerImage !== '' &&
+    (!infoNeededToComplete || infoNeededToComplete === '') &&
+    story.completeness > 0.85
+  ) {
+    return true;
+  }
+
+  return false;
 }
 
 function getEarliestTimestamp(

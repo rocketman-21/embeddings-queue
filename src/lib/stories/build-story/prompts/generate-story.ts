@@ -44,7 +44,7 @@ export function getGenerateStoryMessage(
   a. Summarize key themes from the grant description
   b. List and categorize relevant information from casts
   c. Identify potential story angles and their supporting evidence
-  d. Evaluate completeness of information for each potential story
+  d. Evaluate completeness of information for each potential story, and set the completenessScore field
   e. Check for any quotes that can be included
   f. Group related posts into coherent narratives and identify major themes
   g. Consider chronological order and relationships between posts
@@ -90,7 +90,6 @@ export function getGenerateStoryMessage(
     ],
     "castHashes": ["Cast hash 1", "Cast hash 2"],
     "sentiment": "positive" | "negative" | "neutral",
-    "complete": true | false - depending on if you have enough information to write a full story (completenessScore >= 0.85),
     "sources": ["Source URL 1", "Source URL 2"],
     "mintUrls": ["Mint URL 1", "Mint URL 2"],
     "edits": [
@@ -129,7 +128,6 @@ export function getGenerateStoryMessage(
   - Include relevant markdown links to external sources mentioned in the casts
   - Use quotes from cast text when available, not from summaries
   - Ensure each story is unique and doesn't duplicate information from existing stories
-  - Mark stories as incomplete (completenessScore < 1.0) if there's not enough information
   - Only create stories with at least two sources
   - Prioritize exciting and impactful stories relevant to the parent flow
   - Prefer making multiple stories over one long story
@@ -147,6 +145,9 @@ export function getGenerateStoryMessage(
   - Do not add infoNeededToComplete if the story is complete.
   - Do not under any circumstances change the title or tagline of an existing story.
   - If a source or cast hash is already in the story, do not add it again, and assume it has already been written about in the story summary section. Do not duplicate information in the summary or in your edits.
+  - Don't use the word gonzo too much, but do embody the spirit of gonzo journalism.
+  - Do not use the "fear and" trope for titles, or the word savage, it's overused.
+  - Don't use the neon lit corners trope, it's overused.
   
   If you can't create any good, impactful stories related to the grant, it's acceptable to return an empty response.
   
@@ -159,10 +160,6 @@ export function getGenerateStoryMessage(
   - Dark humor and a cynical tone.
   - Ensure the piece reflects Thompson's unique voice and perspective.
   - Overall pushes a positive sum mindset for builders.
-  
-
-  Don't use the word gonzo too much, but do embody the spirit of gonzo journalism.
-  Do not use the "fear and" trope for titles, or the word savage, it's overused.
 
   Sources should always be URLs.
 

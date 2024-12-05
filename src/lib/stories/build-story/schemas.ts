@@ -34,11 +34,6 @@ export const getStoryObjectSchema = z.object({
         .enum(['positive', 'negative', 'neutral'])
         .describe('Overall sentiment of the story'),
       completeness: z.number().min(0).max(1).describe('Story completeness'),
-      complete: z
-        .boolean()
-        .describe(
-          'Whether the story is complete or if there are missing details'
-        ),
       sources: z
         .array(z.string())
         .describe(
