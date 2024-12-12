@@ -25,7 +25,7 @@ export const fetchUrlSummaries = async (
 
       let summary: string | null = null;
 
-      if (url.includes('warpcast.com')) {
+      if (isCastUrl(url)) {
         summary = await describeCast(url, redisClient, job);
         summary = `Quoted post: ${summary}`;
       } else if (url.includes('zora.co')) {
@@ -131,4 +131,12 @@ export async function saveUrlSummariesForCastHash(
   log(`Saved ${d.rowCount} embed summaries to db`, job);
 
   return summaries;
+}
+
+export function isCastUrl(url: string): boolean {
+  // Match both short and full hash formats
+  // e.g. warpcast.com/username/0x8646adad or warpcast.com/username/0x8646adadbef1bdc9a8daf15f70994c36de823543
+  const castUrlPattern =
+    /^https?:\/\/(?:www\.)?warpcast\.com\/[\w-]+\/0x[a-fA-F0-9]{8,40}$/;
+  return castUrlPattern.test(url);
 }
