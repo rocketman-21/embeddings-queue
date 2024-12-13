@@ -35,7 +35,8 @@ export async function describeCast(
   );
 
   if (!cast) {
-    throw new Error(`Cast not found for hash: ${castHashStr}`);
+    log(`Cast not found for hash: ${castHashStr}`, job);
+    return '';
   }
 
   if (!cast.timestamp) {
