@@ -42,9 +42,12 @@ export const getEmbedding = async (
     input += ` [Contains attachments: ${summaries.join(', ')}]`;
   }
 
+  // Truncate input if it exceeds model's context length
+  const truncatedInput = input.slice(0, 8000); // Leave buffer for safety
+
   const response = await openai.embeddings.create({
     model: 'text-embedding-3-small',
-    input: input,
+    input: truncatedInput,
   });
 
   return {
