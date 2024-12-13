@@ -63,6 +63,7 @@ export function getTextFromCastContent(
   7. List pros and cons for whether the cast qualifies as a grant update.
   8. Be absolutely sure that the work or impact being shared is not just re-posted work of others.
   9. If the cast quotes a post from another user, pay attention to the context of the quote and what the user is saying in the quoted post, especially if they tag the grant recipient in the quoted post.
+  10. If the grant is an update, do not under any circumstances shorten the grantId in the output. This output will be used to update the database, and we need the full grantId.
   
   Wrap your analysis in <detailed_analysis> tags. After your analysis, provide your determination:
   

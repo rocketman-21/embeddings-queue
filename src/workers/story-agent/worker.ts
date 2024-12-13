@@ -89,7 +89,7 @@ export const storyAgentWorker = async (
 
             if (!grant || !parentGrant) {
               throw new Error(
-                `No grant or parent grant found for story event: ${story.newCastId}`
+                `No ${!grant ? 'grant' : 'parent grant'} found for story event: ${story.newCastId}`
               );
             }
 
