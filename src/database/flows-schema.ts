@@ -50,62 +50,58 @@ export const stories = webSchema.table('Stories', {
 export const grant = pgTable('Grant', {
   id: text('id').primaryKey(),
   recipient: text('recipient').notNull(),
-  flow_id: text('flow_id').notNull(),
+  flowId: text('flow_id').notNull(),
   submitter: text('submitter').notNull(),
-  parent_contract: text('parent_contract').notNull(),
-  is_top_level: integer('is_top_level').notNull(),
-  is_flow: integer('is_flow').notNull(),
+  parentContract: text('parent_contract').notNull(),
+  isTopLevel: integer('is_top_level').notNull(),
+  isFlow: integer('is_flow').notNull(),
   title: text('title').notNull(),
   description: text('description').notNull(),
   image: text('image').notNull(),
   tagline: text('tagline'),
   url: text('url'),
-  is_removed: integer('is_removed').notNull(),
-  is_active: integer('is_active').notNull(),
-  votes_count: text('votes_count').notNull(),
-  monthly_incoming_flow_rate: text('monthly_incoming_flow_rate').notNull(),
-  monthly_incoming_baseline_flow_rate: text(
+  isRemoved: integer('is_removed').notNull(),
+  isActive: integer('is_active').notNull(),
+  votesCount: text('votes_count').notNull(),
+  monthlyIncomingFlowRate: text('monthly_incoming_flow_rate').notNull(),
+  monthlyIncomingBaselineFlowRate: text(
     'monthly_incoming_baseline_flow_rate'
   ).notNull(),
-  monthly_incoming_bonus_flow_rate: text(
+  monthlyIncomingBonusFlowRate: text(
     'monthly_incoming_bonus_flow_rate'
   ).notNull(),
-  monthly_outgoing_flow_rate: text('monthly_outgoing_flow_rate').notNull(),
-  monthly_reward_pool_flow_rate: text(
-    'monthly_reward_pool_flow_rate'
-  ).notNull(),
-  monthly_baseline_pool_flow_rate: text(
+  monthlyOutgoingFlowRate: text('monthly_outgoing_flow_rate').notNull(),
+  monthlyRewardPoolFlowRate: text('monthly_reward_pool_flow_rate').notNull(),
+  monthlyBaselinePoolFlowRate: text(
     'monthly_baseline_pool_flow_rate'
   ).notNull(),
-  monthly_bonus_pool_flow_rate: text('monthly_bonus_pool_flow_rate').notNull(),
-  bonus_member_units: text('bonus_member_units').notNull(),
-  baseline_member_units: text('baseline_member_units').notNull(),
-  total_earned: text('total_earned').notNull(),
-  active_recipient_count: integer('active_recipient_count').notNull(),
-  awaiting_recipient_count: integer('awaiting_recipient_count').notNull(),
-  challenged_recipient_count: integer('challenged_recipient_count').notNull(),
+  monthlyBonusPoolFlowRate: text('monthly_bonus_pool_flow_rate').notNull(),
+  bonusMemberUnits: text('bonus_member_units').notNull(),
+  baselineMemberUnits: text('baseline_member_units').notNull(),
+  totalEarned: text('total_earned').notNull(),
+  activeRecipientCount: integer('active_recipient_count').notNull(),
+  awaitingRecipientCount: integer('awaiting_recipient_count').notNull(),
+  challengedRecipientCount: integer('challenged_recipient_count').notNull(),
   tcr: text('tcr').unique().notNull(),
   erc20: text('erc20').unique().notNull(),
   arbitrator: text('arbitrator').unique().notNull(),
-  token_emitter: text('token_emitter').unique().notNull(),
+  tokenEmitter: text('token_emitter').unique().notNull(),
   status: integer('status').notNull(),
-  challenge_period_ends_at: integer('challenge_period_ends_at').notNull(),
-  is_disputed: integer('is_disputed').notNull(),
-  is_resolved: integer('is_resolved').notNull(),
-  evidence_group_id: text('evidence_group_id').unique().notNull(),
-  created_at: integer('created_at').notNull(),
-  updated_at: integer('updated_at').notNull(),
-  baseline_pool: text('baseline_pool').notNull(),
-  bonus_pool: text('bonus_pool').notNull(),
-  manager_reward_pool: text('manager_reward_pool').notNull(),
-  super_token: text('super_token').notNull(),
-  manager_reward_superfluid_pool: text(
-    'manager_reward_superfluid_pool'
-  ).notNull(),
-  manager_reward_pool_flow_rate_percent: integer(
+  challengePeriodEndsAt: integer('challenge_period_ends_at').notNull(),
+  isDisputed: integer('is_disputed').notNull(),
+  isResolved: integer('is_resolved').notNull(),
+  evidenceGroupId: text('evidence_group_id').unique().notNull(),
+  createdAt: integer('created_at').notNull(),
+  updatedAt: integer('updated_at').notNull(),
+  baselinePool: text('baseline_pool').notNull(),
+  bonusPool: text('bonus_pool').notNull(),
+  managerRewardPool: text('manager_reward_pool').notNull(),
+  superToken: text('super_token').notNull(),
+  managerRewardSuperfluidPool: text('manager_reward_superfluid_pool').notNull(),
+  managerRewardPoolFlowRatePercent: integer(
     'manager_reward_pool_flow_rate_percent'
   ).notNull(),
-  baseline_pool_flow_rate_percent: integer(
+  baselinePoolFlowRatePercent: integer(
     'baseline_pool_flow_rate_percent'
   ).notNull(),
 });
