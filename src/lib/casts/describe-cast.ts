@@ -12,6 +12,12 @@ export async function describeCast(
   redisClient: RedisClientType,
   job: Job
 ): Promise<string> {
+  // Check if the URL is in the format https://warpcast.com/jrf/0x99bfa139
+  if (/https:\/\/warpcast\.com\/[a-zA-Z0-9]+\/0x[a-fA-F0-9]{8}/.test(castUrl)) {
+    log(`Skipping cast ${castUrl} because it is incorrect format`, job);
+    return '';
+  }
+
   // Extract cast hash from URL
   const hashMatch = castUrl.match(/\/0x([a-fA-F0-9]{40})/);
   if (!hashMatch) {
