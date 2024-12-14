@@ -85,7 +85,7 @@ export function getGenerateStoryMessage(
   (2-7 paragraphs total)
     ",
     "completenessScore": 0.0 to 1.0,
-    "infoNeededToComplete": "Description of missing information (if incomplete)"
+    "infoNeededToComplete": "Description of missing information (if incomplete). Only fill this in if the story is incomplete with a completenessScore of less than 0.8. If the completenessScore is 0.8 or higher, leave this field blank."
     "keyPoints": ["Key point 1", "Key point 2"],
     "timeline": [
         "timestamp": "YYYY-MM-DDTHH:mm:ss.sssZ",
