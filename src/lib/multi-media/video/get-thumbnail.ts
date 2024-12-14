@@ -29,7 +29,7 @@ export async function extractDiverseThumbnail(
   videoUrl: string,
   outputDir: string,
   job: Job
-): Promise<string> {
+): Promise<string | null> {
   let framePaths: string[] = [];
 
   try {
@@ -145,8 +145,10 @@ export async function extractDiverseThumbnail(
       );
     }
 
-    if (frameStats.length === 0)
-      throw new Error('No valid frames found after processing all timestamps');
+    if (frameStats.length === 0) {
+      log('No valid frames found after processing all timestamps', job);
+      return null;
+    }
 
     // Select best frame
     const selectedFrame = frameStats.reduce((prev, curr) =>
