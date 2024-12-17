@@ -11,6 +11,7 @@ import {
 } from 'drizzle-orm/pg-core';
 
 const webSchema = pgSchema('web');
+const onchainSchema = pgSchema('onchain');
 
 export const derivedData = webSchema.table('DerivedData', {
   id: text('id').primaryKey(),
@@ -47,7 +48,7 @@ export const stories = webSchema.table('Stories', {
   edits: jsonb('edits'),
 });
 
-export const grant = pgTable('Grant', {
+export const grant = onchainSchema.table('Grant', {
   id: text('id').primaryKey(),
   recipient: text('recipient').notNull(),
   flowId: text('flow_id').notNull(),
