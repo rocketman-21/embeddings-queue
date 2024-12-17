@@ -105,6 +105,9 @@ export async function analyzeCast(
     [anthropicModel, openAIModel, googleAiStudioModel]
   );
 
+  log('Grant update analysis text', job);
+  log(text.text, job);
+
   const { object } = await retryAiCallWithBackoff(
     (model) => () =>
       generateObject({
@@ -124,7 +127,8 @@ export async function analyzeCast(
         messages: [
           {
             role: 'system',
-            content: `You are an AI assistant that is receiving a detailed analysis of a cast and needs to determine if it qualifies as a grant update.`,
+            content: `You are an AI assistant that is receiving a detailed analysis of a cast and needs to determine if it qualifies as a grant update.
+            Do not under any circumstances make up a grantId or return a grantId that is not in the following list: ${grants.map((g) => g.id).join(', ')}. If the cast does not qualify as a grant update, return an empty string for the grantId.`,
           },
           {
             role: 'user',
@@ -141,15 +145,20 @@ export async function analyzeCast(
     [anthropicModel, openAIModel, googleAiStudioModel]
   );
 
+  log('Grant update analysis result', job);
+  log(JSON.stringify(object, null, 2), job);
+
   const result = {
     ...object,
     castHash: data.castHash,
   };
 
-  // verify that the grantId is correct
-  const grant = grants.find((g) => g.id === object.grantId);
-  if (!grant) {
-    throw new Error(`Grant ID ${object.grantId} not found in grants`);
+  // verify that the grantId is correct if present
+  if (object.grantId) {
+    const grant = grants.find((g) => g.id === object.grantId);
+    if (!grant) {
+      throw new Error(`Grant ID ${object.grantId} not found in grants`);
+    }
   }
 
   // Cache the analysis
