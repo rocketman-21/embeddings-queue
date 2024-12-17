@@ -68,7 +68,7 @@ export function getTextFromCastContent(
   Wrap your analysis in <detailed_analysis> tags. After your analysis, provide your determination:
   
   <determination>
-  grantId: [grantId if it's a grant update, empty string if not]
+  grantId: [grantId if it's a grant update, empty string if not]. Be absolutely sure that the grantId is correct.
   confidence_score: [your confidence score if it's a grant update, on a scale of 0-100]
   explanation: [brief explanation of your decision]
   </determination>
@@ -89,6 +89,7 @@ export function getTextFromCastContent(
       - Slogans/catchphrases
       - Personal philosophies
     - Side projects mentioned in grant description
+    - Be absolutely sure that the grantId is correct.
     
   - You can count as updates:
     - Community building activities involving others if led by recipient

@@ -146,6 +146,12 @@ export async function analyzeCast(
     castHash: data.castHash,
   };
 
+  // verify that the grantId is correct
+  const grant = grants.find((g) => g.id === object.grantId);
+  if (!grant) {
+    throw new Error(`Grant ID ${object.grantId} not found in grants`);
+  }
+
   // Cache the analysis
   await cacheCastAnalysis(redisClient, castHash, result);
 
