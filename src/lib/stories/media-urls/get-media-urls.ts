@@ -46,7 +46,7 @@ export async function getMediaUrls(
 
     const embedsArray = Array.isArray(cast.embeds)
       ? cast.embeds
-      : [cast.embeds];
+      : JSON.parse(cast.embeds);
 
     for (const embed of embedsArray) {
       const result = await processEmbed(
