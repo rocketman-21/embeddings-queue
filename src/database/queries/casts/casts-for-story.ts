@@ -3,10 +3,28 @@ import { farcasterCasts, farcasterProfiles } from '../../farcaster-schema';
 import { farcasterDb } from '../../farcasterDb';
 import { alias } from 'drizzle-orm/pg-core';
 
-const castsForStories = async (computedTag: string) => {
+export interface CastForStory
+  extends Omit<
+    Awaited<ReturnType<typeof fetchCastsForStories>>[number],
+    'replies'
+  > {
+  replies: StoryCastReply[] | null;
+}
+
+export interface StoryCastReply {
+  text: string | null;
+  fid: number | null;
+  hash: string | null;
+  fname: string | null;
+  embeds: string | null;
+  timestamp: Date | null;
+  embedSummaries: string[] | null;
+}
+
+function createRepliesSubquery() {
   const repliesAlias = alias(farcasterCasts, 'replies');
 
-  const repliesSubquery = farcasterDb
+  return farcasterDb
     .select({
       text: repliesAlias.text,
       fid: repliesAlias.fid,
@@ -15,15 +33,23 @@ const castsForStories = async (computedTag: string) => {
         fid: farcasterProfiles.fid,
         fname: farcasterProfiles.fname,
       },
+      embeds: repliesAlias.embeds,
+      embedSummaries: repliesAlias.embedSummaries,
+      timestamp: repliesAlias.timestamp,
     })
     .from(repliesAlias)
     .leftJoin(farcasterProfiles, eq(repliesAlias.fid, farcasterProfiles.fid))
     .where(
-      sql`${repliesAlias.rootParentHash} = ${farcasterCasts.hash} AND 
-          ${repliesAlias.hash} != ${farcasterCasts.hash}`
+      sql`${repliesAlias.rootParentHash} = ${farcasterCasts.hash}
+        AND ${repliesAlias.hash} != ${farcasterCasts.hash}
+        AND ${repliesAlias.fid} = ${farcasterCasts.fid}`
     );
+}
 
-  const casts = await farcasterDb
+async function fetchCastsForStories(computedTag: string) {
+  const repliesSubquery = createRepliesSubquery();
+
+  return farcasterDb
     .select({
       id: farcasterCasts.id,
       createdAt: farcasterCasts.createdAt,
@@ -48,26 +74,14 @@ const castsForStories = async (computedTag: string) => {
     .from(farcasterCasts)
     .leftJoin(farcasterProfiles, eq(farcasterCasts.fid, farcasterProfiles.fid))
     .where(
-      sql`${farcasterCasts.computedTags} @> ARRAY[${computedTag}]::text[] AND ${farcasterCasts.createdAt} >= NOW() - INTERVAL '1 month'`
+      sql`${farcasterCasts.computedTags} @> ARRAY[${computedTag}]::text[]
+        AND ${farcasterCasts.createdAt} >= NOW() - INTERVAL '1 month'`
     )
     .orderBy(asc(farcasterCasts.timestamp));
+}
 
-  return casts;
-};
-
-export const getAllCastsForStories = async (computedTag: string) => {
-  return castsForStories(computedTag) as Promise<CastForStory[]>;
-};
-
-export type CastForStory = Omit<
-  Awaited<ReturnType<typeof castsForStories>>[number],
-  'replies'
-> & {
-  replies:
-    | {
-        text: string | null;
-        fid: number | null;
-        hash: string | null;
-      }[]
-    | null;
-};
+export async function getAllCastsForStories(
+  computedTag: string
+): Promise<CastForStory[]> {
+  return fetchCastsForStories(computedTag) as Promise<CastForStory[]>;
+}

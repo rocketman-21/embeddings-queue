@@ -2,7 +2,10 @@ import { Job } from 'bullmq';
 import { getAndSaveUrlSummaries } from '../url-summaries/attachments';
 import { RedisClientType } from 'redis';
 import { CastWithParent } from '../../database/queries/casts/casts-with-parent';
-import { CastForStory } from '../../database/queries/casts/casts-for-story';
+import {
+  CastForStory,
+  StoryCastReply,
+} from '../../database/queries/casts/casts-for-story';
 import { ImpactVerification } from './impact-verification';
 
 function getEmbedUrls(embeds: string | null): string[] {
@@ -115,25 +118,46 @@ ${attachments}
 ${attachmentUrls}`;
 }
 
-function formatRepliesSection(
-  replies:
-    | { text: string | null; fid: number | null; hash: string | null }[]
-    | null
-): string {
-  if (!replies || replies.length === 0) {
-    return '';
-  }
+export function formatRepliesSection(replies: StoryCastReply[] | null): string {
+  if (!replies?.length) return '';
 
-  const replyTexts = replies
+  return replies
     .filter((reply) => reply.text && reply.hash)
-    .map((reply) => {
-      const replyUrl = generateCastUrl(undefined, getCastHash(reply.hash!));
-      return `REPLY: ${reply.text}
-REPLY_URL: ${replyUrl}`;
-    });
-
-  return replyTexts.join('\n');
+    .map(formatSingleReply)
+    .join('\n');
 }
+
+function formatSingleReply(reply: StoryCastReply): string {
+  if (!reply.fname) throw new Error('Reply author is required');
+
+  const bufferHash =
+    typeof reply.hash === 'string'
+      ? Buffer.from(reply.hash.replace('0x', '').replace('\\x', ''), 'hex')
+      : reply.hash;
+
+  const replyUrl = generateCastUrl(reply.fname, bufferHash);
+
+  const attachments = reply.embedSummaries?.length
+    ? `REPLY_ATTACHMENTS: ${reply.embedSummaries.join(' | ')}`
+    : '';
+
+  const embedUrls = reply.embeds ? getEmbedUrls(reply.embeds) : [];
+  const attachmentUrls = embedUrls.length
+    ? `REPLY_ATTACHMENT_URLS: ${embedUrls.join(' | ')}`
+    : '';
+
+  const timestamp = reply.timestamp
+    ? `TIMESTAMP: ${new Date(reply.timestamp).toISOString()}`
+    : '';
+
+  return `REPLY_AUTHOR: ${reply.fname}
+${timestamp}
+REPLY: ${reply.text}
+REPLY_URL: ${replyUrl}
+${attachments}
+${attachmentUrls}`;
+}
+
 export async function generateCastTextForStory(
   cast: CastForStory,
   redisClient: RedisClientType,
@@ -154,8 +178,10 @@ export async function generateCastTextForStory(
 
   const embedUrls = getEmbedUrls(cast.embeds);
 
+  if (!cast.profile?.fname) throw new Error('Cast author is required');
+
   const contentText = cast.text ? `CONTENT: ${cast.text}` : '';
-  const castUrl = generateCastUrl(cast.profile?.fname ?? undefined, cast.hash);
+  const castUrl = generateCastUrl(cast.profile?.fname, cast.hash);
   const attachments = embedSummaries.length
     ? `ATTACHMENTS: ${embedSummaries.join(' | ')}`
     : '';
