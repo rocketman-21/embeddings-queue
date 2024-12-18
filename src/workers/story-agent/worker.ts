@@ -52,18 +52,27 @@ export const storyAgentWorker = async (
 
           try {
             log(`Processing story event: ${story.newCastId}`, job);
-            const existingStories = await getGrantStories(story.grantId);
+            const allStories = await getGrantStories(story.grantId);
             log(
-              `Found ${existingStories.length} existing stories for grant: ${story.grantId}`,
+              `Found ${allStories.length} existing stories for grant: ${story.grantId}`,
+              job
+            );
+
+            // relevant stories are those that have < 5 castHashes attached
+            // do this so stories don't get too big or long
+            const relevantStories = allStories.filter(
+              (story) => (story.castHashes?.length || 0) < 5
+            );
+
+            log(
+              `Found ${relevantStories.length} relevant stories for grant: ${story.grantId}`,
               job
             );
 
             const rawCasts = await getAllCastsForStories(story.grantId);
 
-            const relevantCasts = filterRelevantCasts(
-              rawCasts,
-              existingStories
-            );
+            // make sure to filter on all stories, not just relevant ones
+            const relevantCasts = filterRelevantCasts(rawCasts, allStories);
 
             if (!relevantCasts.length) {
               log(
@@ -103,7 +112,7 @@ export const storyAgentWorker = async (
               {
                 description: parentGrant.description,
               },
-              existingStories,
+              relevantStories,
               [grant.recipient]
             );
 
