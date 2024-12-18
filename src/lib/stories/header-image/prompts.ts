@@ -14,6 +14,7 @@ Please analyze these images and select the best one for the story header based o
 4. Professional appearance
 5. Ability to capture reader attention
 6. Minimize the amount of text in the image
+7. Prefer horizontal images over vertical images
 
 Select the image that best represents the story's main theme or impact. Return empty string if:
 - The images are screenshots of websites, receipts, or other utilitarian content
