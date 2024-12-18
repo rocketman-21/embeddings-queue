@@ -96,11 +96,6 @@ export function getGenerateStoryMessage(
     "sentiment": "positive" | "negative" | "neutral",
     "sources": ["Source URL 1", "Source URL 2"],
     "mintUrls": ["Mint URL 1", "Mint URL 2"],
-    "edits": [
-        "timestamp": "YYYY-MM-DDTHH:mm:ss.sssZ", 
-        "message": "Edit description",
-        "address": "ETH address of the editor (yours is ${authorAddress})"
-    ]
   </story>
 
   <story_update>

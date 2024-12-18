@@ -28,6 +28,12 @@ export async function prepareCastData(
       timestamp: casts[index].timestamp,
     }))
     .sort(
-      (a, b) => (a.timestamp?.getTime() || 0) - (b.timestamp?.getTime() || 0)
+      (a: CastData, b: CastData) =>
+        (a.timestamp?.getTime() || 0) - (b.timestamp?.getTime() || 0)
     );
+}
+
+interface CastData {
+  content: string;
+  timestamp: Date | null;
 }
