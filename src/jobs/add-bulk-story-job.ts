@@ -2,7 +2,7 @@ import { Queue } from 'bullmq';
 import { FastifyReply, FastifyRequest } from 'fastify';
 import { StoryJobBody } from '../types/job';
 
-export const handleBulkAddStoryJob = (queue: Queue) => {
+export const handleBulkAddStoryJob = (queue: Queue<StoryJobBody[]>) => {
   return async (
     req: FastifyRequest<{ Body: { jobs: StoryJobBody[] } }>,
     reply: FastifyReply

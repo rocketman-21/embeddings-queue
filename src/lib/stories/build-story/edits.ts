@@ -9,7 +9,7 @@ import {
   openAIModel,
   retryAiCallWithBackoff,
 } from '../../ai';
-import { DR_GONZO_ADDRESS } from '../config';
+import { DR_GONZO_ADDRESS } from '../../config';
 import { LimitedStory } from './populate-story-data';
 
 // Processes edits for stories by comparing existing and new stories

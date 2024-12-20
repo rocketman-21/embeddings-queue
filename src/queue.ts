@@ -6,8 +6,9 @@ import { bulkEmbeddingsWorker } from './workers/bulk-embeddings';
 import { singleEmbeddingWorker } from './workers/single-embedding';
 import { isGrantUpdateWorker } from './workers/grant-update/worker';
 import { builderProfileWorker } from './workers/builder-profile/worker';
-import { JobBody, StoryJobBody } from './types/job';
+import { FarcasterAgentJobBody, JobBody, StoryJobBody } from './types/job';
 import { storyAgentWorker } from './workers/story-agent/worker';
+import { farcasterAgentWorker } from './workers/farcaster-agent/worker';
 
 if (!process.env.OPENAI_API_KEY) {
   throw new Error('OPENAI_API_KEY environment variable is required');
@@ -110,4 +111,10 @@ export const setupStoryQueueProcessor = async (
     redisClient as RedisClientType,
     bulkEmbeddingsQueue
   );
+};
+
+export const setupFarcasterAgentQueueProcessor = async (queueName: string) => {
+  await ensureRedisConnected();
+
+  farcasterAgentWorker(queueName, connection, redisClient as RedisClientType);
 };

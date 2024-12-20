@@ -2,7 +2,9 @@ import { Queue } from 'bullmq';
 import { FastifyReply, FastifyRequest } from 'fastify';
 import { DeletionJobBody, validTypes } from '../types/job';
 
-export const handleDeleteEmbedding = (deletionQueue: Queue) => {
+export const handleDeleteEmbedding = (
+  deletionQueue: Queue<DeletionJobBody>
+) => {
   return async (
     req: FastifyRequest<{
       Body: DeletionJobBody;

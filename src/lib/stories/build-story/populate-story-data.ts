@@ -3,7 +3,7 @@ import { RedisClientType } from 'redis';
 import { StoryAnalysis } from './types';
 import { getMediaUrls } from '../media-urls/get-media-urls';
 import { getHeaderImage } from '../header-image/get-header-image';
-import { DR_GONZO_ADDRESS } from '../config';
+import { DR_GONZO_ADDRESS } from '../../config';
 import { CastForStory } from '../../../database/queries/casts/casts-for-story';
 
 export type LimitedStory = Omit<

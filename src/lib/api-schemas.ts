@@ -161,3 +161,26 @@ export const storySchema = {
     },
   },
 };
+
+export const farcasterAgentSchema = {
+  body: {
+    type: 'object',
+    required: ['jobs'],
+    properties: {
+      jobs: {
+        type: 'array',
+        items: {
+          type: 'object',
+          required: ['agentFid', 'customInstructions'],
+          properties: {
+            agentFid: { type: 'number' },
+            customInstructions: { type: 'string' },
+            replyToCastId: { type: ['number', 'null'] },
+            postToChannelId: { type: ['string', 'null'] },
+          },
+        },
+        minItems: 1,
+      },
+    },
+  },
+};

@@ -1,6 +1,6 @@
 import { Job } from 'bullmq';
 import { GrantStories } from '../../../database/queries/stories/get-grant-stories';
-import { DR_GONZO_ADDRESS } from '../config';
+import { DR_GONZO_ADDRESS } from '../../config';
 import {
   anthropicModel,
   openAIModel,

@@ -2,7 +2,7 @@ import { Queue } from 'bullmq';
 import { FastifyReply, FastifyRequest } from 'fastify';
 import { JobBody, validTypes } from '../types/job';
 
-export const handleAddEmbeddingJob = (queue: Queue) => {
+export const handleAddEmbeddingJob = (queue: Queue<JobBody>) => {
   return async (
     req: FastifyRequest<{ Body: JobBody }>,
     reply: FastifyReply
@@ -49,7 +49,6 @@ export const handleAddEmbeddingJob = (queue: Queue) => {
       ok: true,
       jobName,
       jobId: job.id,
-      contentHash: job.data.contentHash,
     });
   };
 };

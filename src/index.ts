@@ -1,15 +1,6 @@
 import fastify, { FastifyInstance } from 'fastify';
 import { Server, IncomingMessage, ServerResponse } from 'http';
 import { Queue } from 'bullmq';
-import {
-  createQueue,
-  setupQueueProcessor,
-  setupDeletionQueueProcessor,
-  setupBulkQueueProcessor,
-  setupIsGrantUpdateQueueProcessor,
-  setupBuilderProfileQueueProcessor,
-  setupStoryQueueProcessor,
-} from './queue';
 import 'dotenv/config';
 import { handleAddEmbeddingJob } from './jobs/addEmbeddingJob';
 import { handleDeleteEmbedding } from './jobs/deleteEmbedding';
@@ -21,58 +12,31 @@ import {
   isGrantUpdateSchema,
   builderProfileSchema,
   storySchema,
+  farcasterAgentSchema,
 } from './lib/api-schemas';
 import { handleBulkAddEmbeddingJob } from './jobs/addBulkEmbeddingJob';
 import { handleBulkAddIsGrantUpdateJob } from './jobs/add-bulk-is-grant-update-job';
 import { handleBuilderProfileJob } from './jobs/add-builder-profile-job';
+import { handleBulkAddStoryJob } from './jobs/add-bulk-story-job';
+import { setupQueues } from './setup-queues';
+import { handleBulkAddFarcasterAgentJob } from './jobs/add-bulk-farcaster-agent';
 import {
+  FarcasterAgentJobBody,
+  StoryJobBody,
   BuilderProfileJobBody,
-  DeletionJobBody,
   IsGrantUpdateJobBody,
   JobBody,
-  StoryJobBody,
+  DeletionJobBody,
 } from './types/job';
-import { handleBulkAddStoryJob } from './jobs/add-bulk-story-job';
-
-const setupQueue = async () => {
-  const embeddingsQueue = createQueue<JobBody>('EmbeddingsQueue');
-  const deletionQueue = createQueue<DeletionJobBody>('DeletionQueue');
-  const bulkEmbeddingsQueue = createQueue<JobBody[]>('BulkEmbeddingsQueue');
-  const isGrantUpdateQueue =
-    createQueue<IsGrantUpdateJobBody[]>('IsGrantUpdateQueue');
-  const builderProfileQueue = createQueue<BuilderProfileJobBody[]>(
-    'BuilderProfileQueue'
-  );
-  const storyQueue = createQueue<StoryJobBody[]>('StoryQueue');
-
-  await setupQueueProcessor(embeddingsQueue.name);
-  await setupDeletionQueueProcessor(deletionQueue.name);
-  await setupBulkQueueProcessor(bulkEmbeddingsQueue.name);
-
-  await setupIsGrantUpdateQueueProcessor(isGrantUpdateQueue.name, storyQueue);
-  await setupBuilderProfileQueueProcessor(
-    builderProfileQueue.name,
-    bulkEmbeddingsQueue
-  );
-  await setupStoryQueueProcessor(storyQueue.name, bulkEmbeddingsQueue);
-
-  return {
-    embeddingsQueue,
-    deletionQueue,
-    bulkEmbeddingsQueue,
-    isGrantUpdateQueue,
-    builderProfileQueue,
-    storyQueue,
-  };
-};
 
 const setupServer = (queues: {
-  embeddingsQueue: Queue;
-  deletionQueue: Queue;
-  bulkEmbeddingsQueue: Queue;
-  isGrantUpdateQueue: Queue;
-  builderProfileQueue: Queue;
-  storyQueue: Queue;
+  embeddingsQueue: Queue<JobBody>;
+  deletionQueue: Queue<DeletionJobBody>;
+  bulkEmbeddingsQueue: Queue<JobBody[]>;
+  isGrantUpdateQueue: Queue<IsGrantUpdateJobBody[]>;
+  builderProfileQueue: Queue<BuilderProfileJobBody[]>;
+  storyQueue: Queue<StoryJobBody[]>;
+  farcasterAgentQueue: Queue<FarcasterAgentJobBody>;
 }) => {
   const server: FastifyInstance<Server, IncomingMessage, ServerResponse> =
     fastify();
@@ -84,6 +48,7 @@ const setupServer = (queues: {
     queues.isGrantUpdateQueue,
     queues.builderProfileQueue,
     queues.storyQueue,
+    queues.farcasterAgentQueue,
   ]);
 
   server.post(
@@ -140,6 +105,15 @@ const setupServer = (queues: {
     handleBulkAddStoryJob(queues.storyQueue)
   );
 
+  server.post(
+    '/bulk-add-farcaster-agent',
+    {
+      preHandler: validateApiKey,
+      schema: farcasterAgentSchema,
+    },
+    handleBulkAddFarcasterAgentJob(queues.farcasterAgentQueue)
+  );
+
   server.setErrorHandler(handleError);
 
   return server;
@@ -150,7 +124,7 @@ const run = async () => {
     throw new Error('API_KEY environment variable is required');
   }
 
-  const queues = await setupQueue();
+  const queues = await setupQueues();
   const server = setupServer(queues);
 
   await server.listen({ port: Number(process.env.PORT), host: '::' });

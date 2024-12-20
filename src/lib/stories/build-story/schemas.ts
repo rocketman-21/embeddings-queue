@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { DR_GONZO_ADDRESS } from '../config';
+import { DR_GONZO_ADDRESS } from '../../config';
 import { StructuredOutputParser } from '@langchain/core/output_parsers';
 
 const storyEdit = z.object({

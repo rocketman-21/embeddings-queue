@@ -2,7 +2,9 @@ import { Queue } from 'bullmq';
 import { FastifyReply, FastifyRequest } from 'fastify';
 import { IsGrantUpdateJobBody } from '../types/job';
 
-export const handleBulkAddIsGrantUpdateJob = (queue: Queue) => {
+export const handleBulkAddIsGrantUpdateJob = (
+  queue: Queue<IsGrantUpdateJobBody[]>
+) => {
   return async (
     req: FastifyRequest<{ Body: { jobs: IsGrantUpdateJobBody[] } }>,
     reply: FastifyReply
